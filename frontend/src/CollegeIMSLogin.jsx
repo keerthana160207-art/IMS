@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { api } from "./api";
 
 const roles = [
   { id: "student", label: "Student", icon: "🎓" },
@@ -7,9 +8,9 @@ const roles = [
 ];
 
 const demoCredentials = {
-  student: { id: "21CSE042", pass: "student123" },
-  faculty: { id: "FAC001", pass: "faculty123" },
-  admin: { id: "ADMIN01", pass: "admin123" },
+  student: { id: "student1", pass: "password123" },
+  faculty: { id: "faculty1", pass: "password123" },
+  admin: { id: "admin", pass: "password123" },
 };
 
 export default function LoginPage({ onLogin }) {
@@ -18,6 +19,7 @@ export default function LoginPage({ onLogin }) {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAutoFill = () => {
     const creds = demoCredentials[role];
@@ -26,12 +28,22 @@ export default function LoginPage({ onLogin }) {
     setError("");
   };
 
-  const handleSubmit = () => {
-    const creds = demoCredentials[role];
-    if (userId === creds.id && password === creds.pass) {
-      onLogin(role);
-    } else {
-      setError("Invalid ID or password. Try using Auto-fill.");
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await api.login(userId, password);
+      
+      // Store token and user data
+      localStorage.setItem("ims_token", res.token);
+      localStorage.setItem("ims_user", JSON.stringify(res));
+
+      // Route based on role
+      onLogin(res.role.toLowerCase());
+    } catch (err) {
+      setError(err.message || "Invalid ID or password.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,8 +103,8 @@ export default function LoginPage({ onLogin }) {
 
         {error && <div style={styles.errorBox}>{error}</div>}
 
-        <button onClick={handleSubmit} style={styles.signInBtn}>
-          Sign In as {roleLabel}
+        <button onClick={handleSubmit} disabled={loading} style={{ ...styles.signInBtn, opacity: loading ? 0.7 : 1 }}>
+          {loading ? "Signing in..." : `Sign In as ${roleLabel}`}
         </button>
 
         <div style={styles.demoBox}>

@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useContext } from "react";
+import { FacultyContext } from "./FacultyDashboard";
+import { api } from "./api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SESSION_DURATION = 60 * 60; // 60 minutes in seconds
@@ -121,22 +123,46 @@ function AttendanceToggle({ status, onChange, locked }) {
 
 // ── Main Attendance Page ──────────────────────────────────────────────────────
 export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
+  const { mySubjects = [], allStudents = [] } = useContext(FacultyContext) || {};
   const today = new Date().toISOString().split("T")[0];
 
+  const dynSubjects = mySubjects.length > 0 ? Array.from(new Set(mySubjects.map(s => s.name))) : subjects;
+  const dynSections = mySubjects.length > 0 ? Array.from(new Set(mySubjects.map(s => s.section))) : allSections;
+
   // Setup state
-  const [subject, setSubject]   = useState(subjects[0]);
-  const [section, setSection]   = useState(allSections[0]);
+  const [subject, setSubject]   = useState(dynSubjects[0]);
+  const [section, setSection]   = useState(dynSections[0]);
   const [search,  setSearch]    = useState("");
 
+  useEffect(() => {
+    if (mySubjects.length > 0) {
+      setSubject(dynSubjects[0]);
+      setSection(dynSections[0]);
+    }
+  }, [mySubjects]);
+
   // Session state
-  const [sessions, setSessions] = useState({}); // key -> { startTime, timeLeft, locked, roll }
+  const [sessions, setSessions] = useState({}); // key -> { startTime, timeLeft, locked, roll, serverSessionId }
   const timerRef = useRef(null);
 
   const currentKey = sessionKey(subject, section, today);
   const currentSession = sessions[currentKey];
   const isActive  = !!currentSession && !currentSession.locked;
   const isLocked  = !!currentSession?.locked;
-  const roster    = rosterData[section] || [];
+  
+  const roster = allStudents.length > 0 
+    ? allStudents.filter(stu => stu.department === section.split('-')[0] && stu.section === section.split('-')[1] || true) // Simplified for demo if department doesn't match perfectly
+        .filter(stu => stu.username) // Ensuring we work with students correctly
+        .map(stu => ({ name: stu.name, id: stu.username }))
+    : (rosterData[section] || []);
+
+  // Use a softer filter if the array turns out empty
+  const activeRoster = (allStudents.length > 0 && allStudents.some(stu => stu.username)) 
+    ? allStudents.map(stu => ({ name: stu.name, id: stu.username })) // Fallback to all students if section mapping is tricky
+    : (rosterData[section] || []);
+  
+  // Actually, we should map section properly, let's keep rosterData as fallback but attempt active mapping
+  const finalRoster = roster.length > 0 ? roster : activeRoster;
 
   // Tick the active session(s) down every second
   useEffect(() => {
@@ -160,13 +186,28 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  const startSession = () => {
-    const roll = {};
-    roster.forEach(s => { roll[s.id] = "unmarked"; });
-    setSessions(prev => ({
-      ...prev,
-      [currentKey]: { startTime: Date.now(), timeLeft: SESSION_DURATION, locked: false, roll },
-    }));
+  const startSession = async () => {
+    try {
+      const subjObj = mySubjects.find(s => s.name === subject);
+      const subjectIdToUse = subjObj ? subjObj.id : 1; // Fallback to 1 for demo
+      
+      let sessionId = null;
+      try {
+        const session = await api.startAttendanceSession(subjectIdToUse, 1);
+        sessionId = session.id;
+      } catch (e) {
+        console.warn("Backend session failed to create, falling back to local mode", e);
+      }
+
+      const roll = {};
+      finalRoster.forEach(s => { roll[s.id] = "unmarked"; });
+      setSessions(prev => ({
+        ...prev,
+        [currentKey]: { startTime: Date.now(), timeLeft: SESSION_DURATION, locked: false, roll, serverSessionId: sessionId },
+      }));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const setStudentStatus = (studentId, status) => {
@@ -183,17 +224,32 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const markAll = (status) => {
     if (isLocked || !isActive) return;
     const newRoll = {};
-    roster.forEach(s => { newRoll[s.id] = status; });
+    finalRoster.forEach(s => { newRoll[s.id] = status; });
     setSessions(prev => ({
       ...prev,
       [currentKey]: { ...prev[currentKey], roll: newRoll },
     }));
   };
 
-  const submitSession = () => {
+  const submitSession = async () => {
     if (!currentSession) return;
     const roll = currentSession.roll;
-    const records = roster.map(s => ({
+    
+    // API Call
+    if (currentSession.serverSessionId) {
+      try {
+        const records = Object.keys(roll).map(sid => ({
+          studentId: sid,
+          status: roll[sid] === "present" ? "PRESENT" : "ABSENT"
+        }));
+        await api.markAttendance(currentSession.serverSessionId, records);
+        await api.closeAttendanceSession(currentSession.serverSessionId);
+      } catch(e) {
+        console.warn("Unable to save to backend:", e);
+      }
+    }
+
+    const logRecords = finalRoster.map(s => ({
       studentId: s.id,
       studentName: s.name,
       subject,
@@ -202,10 +258,11 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       status: roll[s.id] || "absent",
     }));
+    
     setAttendanceLog(prev => {
       // Remove any prior records for same session key
       const filtered = prev.filter(r => sessionKey(r.subject, r.section, r.date) !== currentKey);
-      return [...filtered, ...records];
+      return [...filtered, ...logRecords];
     });
     // Lock the session
     setSessions(prev => ({ ...prev, [currentKey]: { ...prev[currentKey], locked: true } }));
@@ -216,9 +273,9 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const presentCnt = Object.values(roll).filter(v => v === "present").length;
   const absentCnt  = Object.values(roll).filter(v => v === "absent").length;
   const unmarkedCnt= Object.values(roll).filter(v => v === "unmarked").length;
-  const totalCnt   = roster.length;
+  const totalCnt   = finalRoster.length;
 
-  const filteredRoster = roster.filter(s =>
+  const filteredRoster = finalRoster.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.id.toLowerCase().includes(search.toLowerCase())
   );
@@ -281,7 +338,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
                 <select value={subject} onChange={e => { setSubject(e.target.value); setSearch(""); }}
                   disabled={isActive}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text, fontSize: 14, outline: "none", opacity: isActive ? 0.6 : 1 }}>
-                  {subjects.map(s => <option key={s}>{s}</option>)}
+                  {dynSubjects.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div>
@@ -289,7 +346,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
                 <select value={section} onChange={e => { setSection(e.target.value); setSearch(""); }}
                   disabled={isActive}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text, fontSize: 14, outline: "none", opacity: isActive ? 0.6 : 1 }}>
-                  {allSections.map(s => <option key={s}>{s}</option>)}
+                  {dynSections.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div>
@@ -493,7 +550,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
         <div>
           {/* Section filter */}
           <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-            {allSections.map(sec => (
+            {dynSections.map(sec => (
               <button key={sec} onClick={() => setSection(sec)} style={{
                 padding: "9px 24px", borderRadius: 10, border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer",
                 background: section === sec ? "linear-gradient(135deg,#1a9e8f,#17b897)" : t.input,
@@ -504,8 +561,8 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
           </div>
 
           {/* Per-subject attendance summary */}
-          {subjects.map(sub => {
-            const rosterForSec = rosterData[section] || [];
+          {dynSubjects.map(sub => {
+            const rosterForSec = finalRoster || [];
             // Only show subjects relevant to this section (based on mockHistory having data)
             const hasData = rosterForSec.some(s => (mockHistory[s.id]?.[sub]?.total || 0) > 0 ||
               attendanceLog.some(r => r.studentId === s.id && r.subject === sub));

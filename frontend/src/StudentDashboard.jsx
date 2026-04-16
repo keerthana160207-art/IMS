@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, createContext, useContext } from "react";
+import { api } from "./api";
 
+export const StudentContext = createContext();
 
 // ─── DATA ───────────────────────────────────────────────────────────────────
 
-const student = {
+const defaultStudent = {
   name: "Arjun Ravi",
   id: "21CSE042",
   dept: "CSE",
@@ -13,14 +15,14 @@ const student = {
   assignments: 3,
 };
 
-const subjectAttendance = [
+const defaultSubjectAttendance = [
   { name: "Data Struct.", pct: 86, color: "#1a9e8f" },
   { name: "Mathematics", pct: 90, color: "#1a9e8f" },
   { name: "OS Concepts", pct: 76, color: "#f0a500" },
   { name: "Database Sys.", pct: 92, color: "#1a9e8f" },
 ];
 
-const todaysClasses = [
+const defaultTodaysClasses = [
   { time: "09:00–10:00", subject: "Data Structures", teacher: "Dr. Ravi K.", room: "A101", now: false },
   { time: "10:00–11:00", subject: "Mathematics III", teacher: "Dr. Priya S.", room: "A102", now: true },
   { time: "11:15–12:15", subject: "Physics Lab", teacher: "Prof. James", room: "Lab-3", now: false },
@@ -42,7 +44,7 @@ const navItems = [
   { id: "imsbot", label: "IMS Bot", icon: "🤖", section: "TOOLS" },
 ];
 
-const attendanceSubjects = [
+const defaultAttendanceSubjects = [
   { name: "Data Structures", present: 33, total: 38, pct: 86 },
   { name: "Mathematics III", present: 34, total: 38, pct: 90 },
   { name: "OS Concepts", present: 29, total: 38, pct: 76 },
@@ -50,7 +52,7 @@ const attendanceSubjects = [
   { name: "English Comm.", present: 27, total: 38, pct: 71 },
 ];
 
-const timetableData = {
+const defaultTimetableData = {
   Mon: [
     { time: "09:00–10:00", subject: "Data Structures", teacher: "Dr. Ravi K.", room: "A101" },
     { time: "10:00–11:00", subject: "Mathematics III", teacher: "Dr. Priya S.", room: "A102" },
@@ -214,8 +216,8 @@ const examSeatingData = [
     time: "10:00 AM – 11:30 AM",
     hallNumber: "Block A - Hall 3",
     seatNumber: "A3-24",
-    studentName: student.name,
-    registerNumber: student.id,
+    studentName: defaultStudent.name,
+    registerNumber: defaultStudent.id,
     className: "III CSE - B",
     invigilator: "Dr. Priya S.",
     instructions: "Bring your ID card and hall ticket. No electronic devices allowed.",
@@ -231,8 +233,8 @@ const examSeatingData = [
     time: "09:00 AM – 12:00 PM",
     hallNumber: "Block C - Hall 1",
     seatNumber: "C1-07",
-    studentName: student.name,
-    registerNumber: student.id,
+    studentName: defaultStudent.name,
+    registerNumber: defaultStudent.id,
     className: "III CSE - B",
     invigilator: "Prof. Ahmed",
     instructions: "Bring your ID card, hall ticket, and drawing instruments if needed. Blue/black pen only.",
@@ -248,8 +250,8 @@ const examSeatingData = [
     time: "09:00 AM – 12:00 PM",
     hallNumber: "Block C - Hall 2",
     seatNumber: "C2-15",
-    studentName: student.name,
-    registerNumber: student.id,
+    studentName: defaultStudent.name,
+    registerNumber: defaultStudent.id,
     className: "III CSE - B",
     invigilator: "Dr. Ravi K.",
     instructions: "Scientific calculators allowed. Bring ID and hall ticket.",
@@ -265,8 +267,8 @@ const examSeatingData = [
     time: "09:00 AM – 12:00 PM",
     hallNumber: "Block B - Hall 4",
     seatNumber: "B4-31",
-    studentName: student.name,
-    registerNumber: student.id,
+    studentName: defaultStudent.name,
+    registerNumber: defaultStudent.id,
     className: "III CSE - B",
     invigilator: "Dr. Kumar",
     instructions: "Closed book exam. No calculators. Bring ID card.",
@@ -277,7 +279,7 @@ const examSeatingData = [
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
-function generateNotifications() {
+function generateNotifications(attendanceSubjects, marksData, examSeatingData) {
   const notifs = [];
   attendanceSubjects.forEach(sub => {
     if (sub.pct < 75) {
@@ -362,7 +364,8 @@ function CircleProgress({ pct, color }) {
 
 // ─── NOTIFICATION BELL ────────────────────────────────────────────────────────
 
-function NotificationBell({ notifications, setNotifications }) {
+function NotificationBell() {
+  const { notifications, setNotifications } = useContext(StudentContext);
   const [open, setOpen] = useState(false);
   const unread = notifications.filter(n => !n.read).length;
   const ref = useRef(null);
@@ -394,7 +397,12 @@ function NotificationBell({ notifications, setNotifications }) {
           </div>
           <div style={{ maxHeight: 420, overflowY: "auto" }}>
             {notifications.map((n, i) => (
-              <div key={n.id} onClick={() => setNotifications(notifications.map((x, xi) => xi === i ? { ...x, read: true } : x))}
+              <div key={n.id} onClick={() => {
+                  if (!n.read && n.id && !`${n.id}`.startsWith('att-') && !`${n.id}`.startsWith('lms-') && !`${n.id}`.startsWith('marks-') && !`${n.id}`.startsWith('assign-') && !`${n.id}`.startsWith('seat-')) {
+                      api.markNotificationRead(n.id).catch(e => console.error(e));
+                  }
+                  setNotifications(notifications.map((x, xi) => xi === i ? { ...x, read: true } : x));
+              }}
                 style={{ padding: "14px 18px", borderBottom: "1px solid #1e3a5222", background: n.read ? "transparent" : "#1a2c42", cursor: "pointer", display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{ fontSize: 20, flexShrink: 0 }}>{n.icon}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -417,6 +425,7 @@ function NotificationBell({ notifications, setNotifications }) {
 // ─── PAGES ────────────────────────────────────────────────────────────────────
 
 function AttendancePage() {
+  const { attendanceSubjects } = useContext(StudentContext);
   return (
     <div>
       <div style={{ marginBottom: 28 }}>
@@ -485,6 +494,7 @@ function AttendancePage() {
 }
 
 function TimetablePage() {
+  const { timetableData } = useContext(StudentContext);
   const todayName = new Date().toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3);
   const defaultDay = days.includes(todayName) ? todayName : "Mon";
   const [selectedDay, setSelectedDay] = useState(defaultDay);
@@ -522,6 +532,7 @@ function TimetablePage() {
 }
 
 function MarksPage() {
+  const { student } = useContext(StudentContext);
   const defaultSemesters = Array.from({ length: 8 }, (_, i) => ({
     sem: i + 1,
     subjects: [
@@ -1587,7 +1598,130 @@ function LoginPage({ onLogin }) {
 function StudentDashboard({ onLogout }) {
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [notifications, setNotifications] = useState(generateNotifications);
+
+  const [student, setStudent] = useState(defaultStudent);
+  const [attendanceSubjects, setAttendanceSubjects] = useState(defaultAttendanceSubjects);
+  const [timetableData, setTimetableData] = useState(defaultTimetableData);
+  const [subjectAttendance, setSubjectAttendance] = useState(defaultSubjectAttendance);
+  const [todaysClasses, setTodaysClasses] = useState(defaultTodaysClasses);
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('ims_user') || '{}');
+    if (user.id) {
+      setStudent(prev => ({ ...prev, name: user.name, id: user.username, dept: user.dept }));
+      
+      const userId = user.id;
+
+      // 1. Fetch Attendance
+      api.getStudentSummary(userId).then(res => {
+        const attData = res.map(s => ({
+          name: s.subjectName,
+          present: s.present,
+          total: s.totalClasses,
+          pct: Math.round(s.percentage) || 100
+        }));
+        if(attData.length > 0) {
+          setAttendanceSubjects(attData);
+          
+          const overallPct = attData.length > 0 ? Math.round(attData.reduce((acc, curr) => acc + curr.pct, 0) / attData.length) : 100;
+          setStudent(prev => ({ ...prev, attendance: overallPct }));
+
+          const subjAtt = attData.map(a => ({
+            name: a.name.length > 15 ? a.name.substring(0,12) + "..." : a.name,
+            pct: a.pct,
+            color: a.pct >= 85 ? "#1a9e8f" : a.pct >= 75 ? "#f0a500" : "#ef4444"
+          }));
+          setSubjectAttendance(subjAtt);
+        }
+      }).catch(err => console.error("Attendance err", err));
+
+      // 2. Fetch Timetable
+      if (user.dept && user.year && user.section) {
+        api.getTimetableBySection(user.dept, user.year, user.section).then(res => {
+          if (res && res.length > 0) {
+            const mappedTt = { Mon: [], Tue: [], Wed: [], Thu: [], Fri: [] };
+            res.forEach(t => {
+              const dayShort = t.dayOfWeek.substring(0, 3);
+              if (mappedTt[dayShort]) {
+                mappedTt[dayShort].push({
+                  time: `${t.startTime.substring(0,5)}–${t.endTime.substring(0,5)}`,
+                  subject: t.subject.subjectName,
+                  teacher: t.faculty.user.name,
+                  room: t.roomNumber,
+                  now: false
+                });
+              }
+            });
+            // sort each day by time
+            Object.keys(mappedTt).forEach(k => {
+               mappedTt[k].sort((a,b) => a.time.localeCompare(b.time));
+            });
+            setTimetableData(mappedTt);
+
+            const todayName = new Date().toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3);
+            if (mappedTt[todayName]) {
+               const dayClasses = mappedTt[todayName];
+               // check "now" logic
+               const currentHour = new Date().getHours();
+               const currentMin = new Date().getMinutes();
+               const currentMins = currentHour * 60 + currentMin;
+               const updated = dayClasses.map(c => {
+                  const [start, end] = c.time.split("–");
+                  const startMins = parseInt(start.split(":")[0]) * 60 + parseInt(start.split(":")[1]);
+                  const endMins = parseInt(end.split(":")[0]) * 60 + parseInt(end.split(":")[1]);
+                  return { ...c, now: (currentMins >= startMins && currentMins <= endMins) };
+               });
+               setTodaysClasses(updated);
+            } else {
+               setTodaysClasses([]);
+            }
+          }
+        }).catch(err => console.error("Timetable err", err));
+      }
+
+      // 3. Fetch Notifications
+      api.getNotifications(userId).then(res => {
+         let mappedNotifs = [];
+         if (res && res.length > 0) {
+           mappedNotifs = res.map(n => ({
+             id: n.id,
+             type: n.type === "LOW_ATTENDANCE" ? "danger" : n.type === "ANNOUNCEMENT" ? "info" : "warning",
+             icon: n.type === "LOW_ATTENDANCE" ? "⚠️" : "🔔",
+             title: n.type.replace("_", " "),
+             message: n.message,
+             time: new Date(n.createdAt || Date.now()).toLocaleDateString(),
+             read: n.isRead
+           }));
+         }
+         
+         // Generate dynamic attendance warnings based on fetched real state
+         api.getStudentSummary(userId).then(attRes => {
+            const attSubjs = attRes.map(s => ({
+              name: s.subjectName,
+              pct: Math.round(s.percentage) || 100,
+              present: s.present,
+              total: s.totalClasses
+            }));
+            const localAttNotifs = generateNotifications(attSubjs, marksData, examSeatingData);
+            setNotifications([...mappedNotifs, ...localAttNotifs.filter(n => n.id.startsWith("att-"))]);
+         }).catch(() => setNotifications(mappedNotifs));
+         
+      }).catch(err => {
+         api.getStudentSummary(userId).then(attRes => {
+            const attSubjs = attRes.map(s => ({
+              name: s.subjectName,
+              pct: Math.round(s.percentage) || 100,
+              present: s.present,
+              total: s.totalClasses
+            }));
+            setNotifications(generateNotifications(attSubjs, marksData, examSeatingData));
+         }).catch(() => {
+            setNotifications(generateNotifications(defaultAttendanceSubjects, marksData, examSeatingData));
+         });
+      });
+    }
+  }, []);
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const hour = new Date().getHours();
@@ -1596,6 +1730,7 @@ function StudentDashboard({ onLogout }) {
   const unread = notifications.filter(n => !n.read).length;
 
   return (
+    <StudentContext.Provider value={{ student, attendanceSubjects, timetableData, todaysClasses, subjectAttendance, notifications, setNotifications }}>
     <div style={s.shell}>
       <aside style={{ ...s.sidebar, width: sidebarOpen ? 228 : 64 }}>
         <div style={s.sidebarLogo}>
@@ -1640,7 +1775,7 @@ function StudentDashboard({ onLogout }) {
               <span>🔍</span>
               <input placeholder="Search..." style={s.searchInput} />
             </div>
-            <NotificationBell notifications={notifications} setNotifications={setNotifications} />
+            <NotificationBell />
             <div style={s.avatarBox}>
               <div style={s.avatar}>AR</div>
               <div><div style={s.avatarName}>{student.name}</div><div style={s.avatarRole}>Student — {student.dept}</div></div>
@@ -1774,6 +1909,7 @@ function StudentDashboard({ onLogout }) {
         </div>
       </div>
     </div>
+    </StudentContext.Provider>
   );
 }
 

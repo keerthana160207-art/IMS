@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 import { ThemeToggle } from "./App";
 import AttendancePage from "./AttendancePage";
+import { api } from "./api";
 
-const faculty = {
+export const FacultyContext = createContext();
+
+const defaultFaculty = {
   name: "Dr. Priya Suresh", id: "FAC-007", dept: "Mathematics",
   students: 187, subjects: 3, avgAttend: 83, atRisk: 12,
 };
@@ -686,7 +689,7 @@ function LeaveRequestsPage({ t }) {
 function AnnouncementsPage({ t }) {
   const [announcementsList, setAnnouncementsList] = useState(announcements);
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({ tag: "ACADEMIC", title: "", body: "", author: faculty.name });
+  const [newAnnouncement, setNewAnnouncement] = useState({ tag: "ACADEMIC", title: "", body: "", author: defaultFaculty.name });
 
   const handleAddAnnouncement = () => {
     if (!newAnnouncement.title || !newAnnouncement.body) return;
@@ -705,7 +708,7 @@ function AnnouncementsPage({ t }) {
     };
     setAnnouncementsList([announcement, ...announcementsList]);
     setShowNewForm(false);
-    setNewAnnouncement({ tag: "ACADEMIC", title: "", body: "", author: faculty.name });
+    setNewAnnouncement({ tag: "ACADEMIC", title: "", body: "", author: defaultFaculty.name });
     alert("Announcement posted successfully!");
   };
 
@@ -1302,15 +1305,16 @@ function StubPage({ title, icon, t }) {
 
 // ── DASHBOARD CONTENT ─────────────────────────────────────────────────────────
 function DashboardContent({ t }) {
+  const { faculty } = useContext(FacultyContext);
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const statCards = [
-    { icon: "👥", value: faculty.students, label: "MY STUDENTS",  sub: "Across 4 sections", color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#1a0d2e)", iconBg: "#a855f722" },
-    { icon: "📚", value: faculty.subjects, label: "SUBJECTS",     sub: "Current semester",  color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#091528)", iconBg: "#3b82f622" },
-    { icon: "✅", value: `${faculty.avgAttend}%`, label: "AVG ATTEND.", sub: "Class average", color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#091a10)", iconBg: "#22c55e22" },
-    { icon: "⚠️", value: faculty.atRisk, label: "AT RISK", sub: "Below 75%", color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#1a1000)", iconBg: "#f59e0b22" },
+    { icon: "👥", value: faculty.students || defaultFaculty.students, label: "MY STUDENTS",  sub: "Across 4 sections", color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#1a0d2e)", iconBg: "#a855f722" },
+    { icon: "📚", value: faculty.subjects || defaultFaculty.subjects, label: "SUBJECTS",     sub: "Current semester",  color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#091528)", iconBg: "#3b82f622" },
+    { icon: "✅", value: `${faculty.avgAttend || defaultFaculty.avgAttend}%`, label: "AVG ATTEND.", sub: "Class average", color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#091a10)", iconBg: "#22c55e22" },
+    { icon: "⚠️", value: faculty.atRisk || defaultFaculty.atRisk, label: "AT RISK", sub: "Below 75%", color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#1a1000)", iconBg: "#f59e0b22" },
   ];
 
   const statusStyle = (status) => {
@@ -1462,6 +1466,35 @@ function DashboardContent({ t }) {
 export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
   const [active, setActive]       = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Live Data State
+  const [faculty, setFaculty] = useState(defaultFaculty);
+  const [mySubjects, setMySubjects] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
+  
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const userJson = localStorage.getItem('ims_user');
+        if (userJson) {
+           const user = JSON.parse(userJson);
+           // Fallback to default fields if API user lacks them
+           setFaculty({ ...defaultFaculty, ...user });
+           
+           const [subs, stus] = await Promise.all([
+             api.getSubjectsByFaculty(user.id),
+             api.getAllStudents()
+           ]);
+           setMySubjects(subs);
+           setAllStudents(stus);
+        }
+      } catch (err) {
+        console.error("Error loading faculty data", err);
+      }
+    }
+    loadData();
+  }, []);
+
   // Shared attendance log — passed to both AttendancePage and AttendanceRecordsPage
   const [attendanceLog, setAttendanceLog] = useState([]);
 
@@ -1483,6 +1516,7 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
   };
 
   return (
+    <FacultyContext.Provider value={{ faculty, mySubjects, allStudents, isDark, toggleTheme, t }}>
     <div style={{ display: "flex", minHeight: "100vh", width: "100vw", background: t.bg, fontFamily: "'Segoe UI', sans-serif", color: t.text, overflow: "hidden", transition: "all 0.3s" }}>
       <aside style={{ width: sidebarOpen ? 220 : 64, background: t.sidebar, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", padding: "20px 0", transition: "width 0.3s", overflow: "hidden", minHeight: "100vh", position: "relative", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 16px 24px" }}>
@@ -1514,6 +1548,16 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
             ))}
           </div>
         ))}
+
+        {sidebarOpen && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 16px 24px", borderBottom: `1px solid ${t.border}`, marginBottom: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff" }}>{faculty.name[0]}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{faculty.name}</div>
+              <div style={{ fontSize: 11, color: t.subtext }}>{faculty.username || faculty.id}</div>
+            </div>
+          </div>
+        )}
 
         <button onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 18px", marginTop: "auto", border: "none", background: "none", color: "#ef4444", cursor: "pointer", fontSize: 14, justifyContent: sidebarOpen ? "flex-start" : "center" }}>
           <span style={{ fontSize: 17, minWidth: 22, textAlign: "center" }}>🚪</span>
@@ -1550,5 +1594,6 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
         <div style={{ padding: 32, flex: 1, overflowY: "auto" }}>{renderPage()}</div>
       </div>
     </div>
+    </FacultyContext.Provider>
   );
 }
