@@ -118,6 +118,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .token(jwt)
                 .role(user.getRole().name())
+                .username(user.getUsername())
                 .fullName(user.getFullName())
                 .userId(user.getId())
                 .department(user.getDepartment())

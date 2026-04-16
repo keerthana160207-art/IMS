@@ -991,6 +991,7 @@ function CalendarPage() {
 // ─── EXAM SEATING PAGE ────────────────────────────────────────────────────────
 
 function ExamSeatingPage() {
+  const { student } = useContext(StudentContext);
   const [selectedExam, setSelectedExam] = useState(null);
   const now = new Date();
 
@@ -1029,8 +1030,8 @@ function ExamSeatingPage() {
           <div style={{ padding: "28px 32px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
               {[
-                { label: "Student Name", value: exam.studentName },
-                { label: "Register Number", value: exam.registerNumber },
+                { label: "Student Name", value: student.name },
+                { label: "Register Number", value: student.id },
                 { label: "Class", value: exam.className },
                 { label: "Department", value: "Computer Science & Engineering" },
                 { label: "Exam Date", value: new Date(exam.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) },
@@ -1608,10 +1609,15 @@ function StudentDashboard({ onLogout }) {
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('ims_user') || '{}');
-    if (user.id) {
-      setStudent(prev => ({ ...prev, name: user.name, id: user.username, dept: user.dept }));
+    if (user.userId || user.id) {
+       setStudent(prev => ({ 
+         ...prev, 
+         name: user.username || user.fullName || user.name || "Student", 
+         id: user.employeeIdOrRollNumber || user.username, 
+         dept: user.department || user.dept 
+       }));
       
-      const userId = user.id;
+      const userId = user.userId || user.id;
 
       // 1. Fetch Attendance
       api.getStudentSummary(userId).then(res => {
@@ -1777,7 +1783,7 @@ function StudentDashboard({ onLogout }) {
             </div>
             <NotificationBell />
             <div style={s.avatarBox}>
-              <div style={s.avatar}>AR</div>
+              <div style={s.avatar}>{student.name.substring(0,2).toUpperCase()}</div>
               <div><div style={s.avatarName}>{student.name}</div><div style={s.avatarRole}>Student — {student.dept}</div></div>
             </div>
           </div>

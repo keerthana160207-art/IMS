@@ -75,6 +75,20 @@ public class DatabaseSeeder implements CommandLineRunner {
             student.setBatch("2023");
             authService.register(student);
         }
+
+        if (!userRepository.existsByUsername("student2")) {
+            RegisterRequest student2 = new RegisterRequest();
+            student2.setUsername("student2");
+            student2.setPassword("password123");
+            student2.setFullName("Second Student");
+            student2.setRole(Role.STUDENT.name());
+            student2.setDepartment("CSE");
+            student2.setRollNumber("CS002");
+            student2.setYear(1);
+            student2.setSection("A");
+            student2.setBatch("2023");
+            authService.register(student2);
+        }
         
         // Populate sample subjects and attendance for student UI
         User fc = userRepository.findByUsername("faculty1").orElse(null);
