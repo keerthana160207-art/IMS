@@ -1,0 +1,2252 @@
+import { useState, useEffect } from "react";
+import { ThemeToggle } from "./App";
+
+// --- Mock Data ---
+const adminStats = {
+  totalStudents: 1248,
+  studentsChange: "+32 this month",
+  totalFaculty: 68,
+  facultySubtext: "Across 4 depts",
+  avgAttendance: 34,
+  attendanceChange: "+2% from last month",
+  totalDepts: 4,
+  deptSubtext: "All departments",
+};
+
+const monthlyAttendance = {
+  months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  avgAttendance: [69, 74, 82, 79, 86, 88, 83, 90, 85, 87, 84, 91],
+};
+
+const departmentData = [
+  { id: 1, name: "Computer Science", attendance: 86, students: 312, faculty: 18, hod: "Dr. Rajesh Kumar", code: "CSE", established: "2005" },
+  { id: 2, name: "Electronics", attendance: 82, students: 248, faculty: 15, hod: "Dr. Priya Sharma", code: "ECE", established: "2006" },
+  { id: 3, name: "Mechanical", attendance: 78, students: 196, faculty: 14, hod: "Dr. Suresh Patel", code: "ME", established: "2004" },
+  { id: 4, name: "Civil Engg.", attendance: 88, students: 180, faculty: 12, hod: "Dr. Anita Desai", code: "CE", established: "2005" },
+];
+
+const studentsData = [
+  { id: 1, name: "Arjun Ravi", rollNo: "21CSE001", department: "Computer Science", year: "3rd", section: "A", attendance: 88, cgpa: 8.4, email: "arjun@college.edu", phone: "9876543210", feeStatus: "paid", pendingAmount: 0, address: "123 Main St, Bangalore", parentContact: "9876543200", dob: "2003-05-15" },
+  { id: 2, name: "Priya Nair", rollNo: "21CSE002", department: "Computer Science", year: "3rd", section: "A", attendance: 72, cgpa: 7.9, email: "priya@college.edu", phone: "9876543211", feeStatus: "pending", pendingAmount: 25000, address: "456 Oak Ave, Mumbai", parentContact: "9876543201", dob: "2003-08-22" },
+  { id: 3, name: "Kiran Raj", rollNo: "21CSE003", department: "Computer Science", year: "3rd", section: "B", attendance: 91, cgpa: 9.1, email: "kiran@college.edu", phone: "9876543212", feeStatus: "paid", pendingAmount: 0, address: "789 Pine Rd, Delhi", parentContact: "9876543202", dob: "2003-02-10" },
+  { id: 4, name: "Anjali M.", rollNo: "21ECE001", department: "Electronics", year: "3rd", section: "A", attendance: 63, cgpa: 6.8, email: "anjali@college.edu", phone: "9876543213", feeStatus: "overdue", pendingAmount: 48000, address: "321 Elm St, Chennai", parentContact: "9876543203", dob: "2003-11-30" },
+  { id: 5, name: "Ravi Kumar", rollNo: "21ECE002", department: "Electronics", year: "3rd", section: "B", attendance: 85, cgpa: 8.0, email: "ravi@college.edu", phone: "9876543214", feeStatus: "paid", pendingAmount: 0, address: "654 Maple Dr, Hyderabad", parentContact: "9876543204", dob: "2003-07-18" },
+  { id: 6, name: "Meena S.", rollNo: "21ME001", department: "Mechanical", year: "3rd", section: "A", attendance: 76, cgpa: 7.2, email: "meena@college.edu", phone: "9876543215", feeStatus: "pending", pendingAmount: 15000, address: "987 Birch Ln, Pune", parentContact: "9876543205", dob: "2003-09-12" },
+  { id: 7, name: "Rohit P.", rollNo: "21ME002", department: "Mechanical", year: "3rd", section: "B", attendance: 82, cgpa: 7.8, email: "rohit@college.edu", phone: "9876543216", feeStatus: "paid", pendingAmount: 0, address: "147 Cedar Ct, Kolkata", parentContact: "9876543206", dob: "2003-03-25" },
+  { id: 8, name: "Sneha K.", rollNo: "21CE001", department: "Civil Engg.", year: "3rd", section: "A", attendance: 90, cgpa: 8.9, email: "sneha@college.edu", phone: "9876543217", feeStatus: "paid", pendingAmount: 0, address: "258 Walnut St, Ahmedabad", parentContact: "9876543207", dob: "2003-12-03" },
+  { id: 9, name: "Vikram Singh", rollNo: "21CSE004", department: "Computer Science", year: "2nd", section: "A", attendance: 78, cgpa: 7.5, email: "vikram@college.edu", phone: "9876543218", feeStatus: "pending", pendingAmount: 35000, address: "369 Spruce Ave, Jaipur", parentContact: "9876543208", dob: "2004-01-19" },
+  { id: 10, name: "Neha Gupta", rollNo: "21ECE003", department: "Electronics", year: "2nd", section: "A", attendance: 92, cgpa: 8.7, email: "neha@college.edu", phone: "9876543219", feeStatus: "paid", pendingAmount: 0, address: "741 Ashok Nagar, Lucknow", parentContact: "9876543209", dob: "2004-06-28" },
+];
+
+const facultyData = [
+  { id: 1, name: "Dr. Rajesh Kumar", department: "Computer Science", designation: "Professor & HOD", qualification: "Ph.D., IIT Bombay", experience: "15 years", email: "rajesh@college.edu", phone: "9988776655", specialization: "AI & ML" },
+  { id: 2, name: "Dr. Priya Sharma", department: "Electronics", designation: "Professor & HOD", qualification: "Ph.D., IIT Madras", experience: "12 years", email: "priya.sharma@college.edu", phone: "9988776656", specialization: "VLSI Design" },
+  { id: 3, name: "Dr. Suresh Patel", department: "Mechanical", designation: "Professor & HOD", qualification: "Ph.D., IIT Delhi", experience: "14 years", email: "suresh@college.edu", phone: "9988776657", specialization: "Thermal Engineering" },
+  { id: 4, name: "Dr. Anita Desai", department: "Civil Engg.", designation: "Professor & HOD", qualification: "Ph.D., IIT Roorkee", experience: "11 years", email: "anita@college.edu", phone: "9988776658", specialization: "Structural Engineering" },
+  { id: 5, name: "Prof. James Wilson", department: "Computer Science", designation: "Associate Professor", qualification: "M.Tech, NIT", experience: "8 years", email: "james@college.edu", phone: "9988776659", specialization: "Cybersecurity" },
+  { id: 6, name: "Dr. Ahmed Khan", department: "Electronics", designation: "Assistant Professor", qualification: "Ph.D., BITS Pilani", experience: "6 years", email: "ahmed@college.edu", phone: "9988776660", specialization: "Embedded Systems" },
+  { id: 7, name: "Prof. Sarah Joseph", department: "Computer Science", designation: "Assistant Professor", qualification: "M.Tech, IIT", experience: "5 years", email: "sarah@college.edu", phone: "9988776661", specialization: "Data Science" },
+];
+
+// --- Timetable Data ---
+const initialTimetable = [
+  { id: 1, day: "Monday", time: "09:00-10:00", subject: "Data Structures", faculty: "Dr. Rajesh Kumar", department: "Computer Science", year: "3rd", section: "A", room: "LH-101" },
+  { id: 2, day: "Monday", time: "10:00-11:00", subject: "Algorithms", faculty: "Prof. James Wilson", department: "Computer Science", year: "3rd", section: "A", room: "LH-101" },
+  { id: 3, day: "Monday", time: "11:00-12:00", subject: "Digital Electronics", faculty: "Dr. Priya Sharma", department: "Electronics", year: "3rd", section: "A", room: "LH-202" },
+  { id: 4, day: "Tuesday", time: "09:00-10:00", subject: "Thermodynamics", faculty: "Dr. Suresh Patel", department: "Mechanical", year: "3rd", section: "A", room: "LH-303" },
+  { id: 5, day: "Tuesday", time: "10:00-11:00", subject: "Data Structures", faculty: "Dr. Rajesh Kumar", department: "Computer Science", year: "3rd", section: "B", room: "LH-102" },
+  { id: 6, day: "Wednesday", time: "09:00-10:00", subject: "Structural Analysis", faculty: "Dr. Anita Desai", department: "Civil Engg.", year: "3rd", section: "A", room: "LH-404" },
+  { id: 7, day: "Wednesday", time: "10:00-11:00", subject: "Embedded Systems", faculty: "Dr. Ahmed Khan", department: "Electronics", year: "3rd", section: "B", room: "LH-203" },
+];
+
+// --- Exam Schedule Data ---
+const examScheduleData = [
+  { id: 1, subject: "Data Structures", department: "Computer Science", year: "3rd", date: new Date(Date.now() + 15 * 60000).toISOString(), // 15 mins from now for demo
+    duration: "3 hours", room: "Hall A", totalStudents: 60, invigilators: ["Dr. Rajesh Kumar", "Prof. James Wilson"] },
+  { id: 2, subject: "Digital Electronics", department: "Electronics", year: "3rd", date: new Date(Date.now() + 2 * 60 * 60000).toISOString(), // 2 hours from now
+    duration: "3 hours", room: "Hall B", totalStudents: 45, invigilators: ["Dr. Priya Sharma"] },
+  { id: 3, subject: "Thermodynamics", department: "Mechanical", year: "3rd", date: new Date(Date.now() + 5 * 60 * 60000).toISOString(), // 5 hours from now
+    duration: "3 hours", room: "Hall C", totalStudents: 40, invigilators: ["Dr. Suresh Patel"] },
+];
+
+// --- Feedback Data ---
+const facultyFeedback = [
+  { facultyId: 1, facultyName: "Dr. Rajesh Kumar", department: "Computer Science", ratings: [5, 4, 5, 4, 5, 4, 5, 4, 5, 4], comments: ["Excellent teacher", "Very knowledgeable"] },
+  { facultyId: 2, facultyName: "Dr. Priya Sharma", department: "Electronics", ratings: [4, 5, 4, 4, 5, 4, 4, 5, 4, 4], comments: ["Good communication", "Helpful"] },
+  { facultyId: 3, facultyName: "Dr. Suresh Patel", department: "Mechanical", ratings: [3, 4, 3, 4, 3, 4, 3, 4, 3, 4], comments: ["Average teaching", "Needs improvement"] },
+  { facultyId: 4, facultyName: "Dr. Anita Desai", department: "Civil Engg.", ratings: [5, 5, 4, 5, 5, 4, 5, 5, 4, 5], comments: ["Outstanding professor", "Very supportive"] },
+  { facultyId: 5, facultyName: "Prof. James Wilson", department: "Computer Science", ratings: [4, 4, 4, 3, 4, 4, 5, 4, 4, 4], comments: ["Good practical knowledge"] },
+  { facultyId: 6, facultyName: "Dr. Ahmed Khan", department: "Electronics", ratings: [4, 5, 4, 5, 4, 4, 5, 4, 4, 5], comments: ["Engaging lectures"] },
+  { facultyId: 7, facultyName: "Prof. Sarah Joseph", department: "Computer Science", ratings: [5, 5, 5, 4, 5, 5, 4, 5, 5, 5], comments: ["Amazing teacher", "Best faculty"] },
+];
+
+// --- Leave & OD Requests ---
+const leaveRequests = [
+  { id: 1, studentName: "Arjun Ravi", rollNo: "21CSE001", department: "Computer Science", year: "3rd", section: "A", type: "Leave", startDate: "2026-04-10", endDate: "2026-04-12", reason: "Medical emergency", status: "Approved", submittedDate: "2026-04-05", document: "medical_cert.pdf" },
+  { id: 2, studentName: "Priya Nair", rollNo: "21CSE002", department: "Computer Science", year: "3rd", section: "A", type: "OD", startDate: "2026-04-15", endDate: "2026-04-15", reason: "Placement drive", status: "Pending", submittedDate: "2026-04-08", document: null },
+  { id: 3, studentName: "Anjali M.", rollNo: "21ECE001", department: "Electronics", year: "3rd", section: "A", type: "Leave", startDate: "2026-04-20", endDate: "2026-04-25", reason: "Family function", status: "Pending", submittedDate: "2026-04-09", document: "invitation.pdf" },
+  { id: 4, studentName: "Ravi Kumar", rollNo: "21ECE002", department: "Electronics", year: "3rd", section: "B", type: "OD", startDate: "2026-04-18", endDate: "2026-04-18", reason: "Technical symposium", status: "Approved", submittedDate: "2026-04-07", document: "event_reg.pdf" },
+  { id: 5, studentName: "Meena S.", rollNo: "21ME001", department: "Mechanical", year: "3rd", section: "A", type: "Leave", startDate: "2026-05-01", endDate: "2026-05-05", reason: "Sister's wedding", status: "Pending", submittedDate: "2026-04-10", document: "wedding_invite.pdf" },
+  { id: 6, studentName: "Vikram Singh", rollNo: "21CSE004", department: "Computer Science", year: "2nd", section: "A", type: "Leave", startDate: "2026-04-12", endDate: "2026-04-14", reason: "Health issues", status: "Rejected", submittedDate: "2026-04-06", document: "doctor_note.pdf" },
+];
+
+// --- Certificates Data ---
+const certificatesData = [
+  { id: 1, studentName: "Arjun Ravi", rollNo: "21CSE001", department: "Computer Science", year: "3rd", section: "A", certificateName: "Python Programming", issueDate: "2025-12-15", type: "Course", issuer: "Coursera", verified: true },
+  { id: 2, studentName: "Kiran Raj", rollNo: "21CSE003", department: "Computer Science", year: "3rd", section: "B", certificateName: "Hackathon Winner 2025", issueDate: "2025-11-20", type: "Achievement", issuer: "College", verified: true },
+  { id: 3, studentName: "Sneha K.", rollNo: "21CE001", department: "Civil Engg.", year: "3rd", section: "A", certificateName: "AutoCAD Certification", issueDate: "2025-10-10", type: "Course", issuer: "Autodesk", verified: true },
+  { id: 4, studentName: "Neha Gupta", rollNo: "21ECE003", department: "Electronics", year: "2nd", section: "A", certificateName: "Robotics Workshop", issueDate: "2026-01-20", type: "Workshop", issuer: "IIT Bombay", verified: false },
+  { id: 5, studentName: "Rohit P.", rollNo: "21ME002", department: "Mechanical", year: "3rd", section: "B", certificateName: "CAD Design", issueDate: "2025-09-05", type: "Course", issuer: "NPTEL", verified: true },
+  { id: 6, studentName: "Priya Nair", rollNo: "21CSE002", department: "Computer Science", year: "3rd", section: "A", certificateName: "Web Development", issueDate: "2026-02-10", type: "Course", issuer: "Udemy", verified: false },
+  { id: 7, studentName: "Anjali M.", rollNo: "21ECE001", department: "Electronics", year: "3rd", section: "A", certificateName: "IoT Workshop", issueDate: "2025-12-01", type: "Workshop", issuer: "IEEE", verified: true },
+];
+
+const announcementsData = [
+  { id: 1, title: "Faculty Meeting", date: "Apr 5, 2026", content: "Monthly department heads meeting at 10:00 AM in Conference Hall.", tag: "MEETING", tagColor: "#3b82f6" },
+  { id: 2, title: "Exam Schedule Released", date: "Apr 2, 2026", content: "End-semester timetable published on portal. Check your department schedule.", tag: "EXAM", tagColor: "#ef4444" },
+  { id: 3, title: "Workshop on AI", date: "Apr 10, 2026", content: "Registration open for faculty development program on Artificial Intelligence.", tag: "EVENT", tagColor: "#f59e0b" },
+  { id: 4, title: "Holiday Notice", date: "Mar 28, 2026", content: "College will remain closed on March 29th for Good Friday.", tag: "HOLIDAY", tagColor: "#22c55e" },
+];
+
+const reportsData = {
+  attendance: {
+    overall: 83.5,
+    byDepartment: [
+      { dept: "Computer Science", percentage: 86, trend: "+2%" },
+      { dept: "Electronics", percentage: 82, trend: "+1%" },
+      { dept: "Mechanical", percentage: 78, trend: "-1%" },
+      { dept: "Civil Engg.", percentage: 88, trend: "+3%" },
+    ]
+  },
+  performance: {
+    averageCGPA: 7.8,
+    topPerformers: [
+      { name: "Kiran Raj", cgpa: 9.1, dept: "CSE" },
+      { name: "Sneha K.", cgpa: 8.9, dept: "CE" },
+      { name: "Arjun Ravi", cgpa: 8.4, dept: "CSE" },
+    ]
+  }
+};
+
+// --- Helper Components ---
+function StatCard({ icon, value, label, subtext, color, grad }) {
+  return (
+    <div style={{
+      background: grad,
+      borderRadius: 16,
+      padding: "20px 18px",
+      border: "1px solid #1e3a52",
+      transition: "all 0.2s",
+    }}>
+      <div style={{ fontSize: 28, marginBottom: 12, opacity: 0.9 }}>{icon}</div>
+      <div style={{ fontSize: 32, fontWeight: 800, color: color, lineHeight: 1.2 }}>{value}</div>
+      <div style={{ fontSize: 12, color: "#7a9ab5", marginTop: 6, fontWeight: 600, letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#22c55e", marginTop: 8 }}>{subtext}</div>
+    </div>
+  );
+}
+
+function DepartmentRow({ name, attendance, students, color }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "12px 0", borderBottom: "1px solid #1e3a52" }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#e0e8f0", marginBottom: 4 }}>{name}</div>
+        <div style={{ fontSize: 12, color: "#7a9ab5" }}>{students} students</div>
+      </div>
+      <div style={{ flex: 2 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, background: "#1a2c42", borderRadius: 8, height: 8 }}>
+            <div style={{ width: `${attendance}%`, height: "100%", background: color, borderRadius: 8 }} />
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 700, color: color, minWidth: 40 }}>{attendance}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendanceTrendChart({ months, data, t }) {
+  const maxValue = Math.max(...data, 100);
+  const chartHeight = 180;
+
+  return (
+    <div style={{ padding: "8px 0 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, padding: "0 4px" }}>
+        {months.map((month) => (
+          <div key={month} style={{ textAlign: "center", fontSize: 11, color: t.subtext, width: 40 }}>{month}</div>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", height: chartHeight, gap: 4 }}>
+        {data.map((value, idx) => {
+          const barHeight = (value / maxValue) * chartHeight;
+          const barColor = value >= 85 ? "#22c55e" : value >= 75 ? "#f59e0b" : "#ef4444";
+          return (
+            <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <div style={{
+                width: "100%",
+                height: barHeight,
+                background: `linear-gradient(to top, ${barColor}, ${barColor}aa)`,
+                borderRadius: "6px 6px 4px 4px",
+                transition: "height 0.4s ease",
+              }} />
+              <div style={{ fontSize: 12, fontWeight: 600, color: barColor }}>{value}%</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// --- Feedback Statistics Component ---
+function FeedbackStatistics({ t }) {
+  const [selectedDept, setSelectedDept] = useState("All");
+  const departments = ["All", ...new Set(facultyFeedback.map(f => f.department))];
+
+  const filteredFeedback = selectedDept === "All" 
+    ? facultyFeedback 
+    : facultyFeedback.filter(f => f.department === selectedDept);
+
+  const getAverageRating = (ratings) => {
+    const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+    return avg.toFixed(1);
+  };
+
+  const getRatingColor = (rating) => {
+    if (rating >= 4.5) return "#22c55e";
+    if (rating >= 4.0) return "#1a9e8f";
+    if (rating >= 3.5) return "#f59e0b";
+    if (rating >= 3.0) return "#f0a500";
+    return "#ef4444";
+  };
+
+  const overallAvg = filteredFeedback.reduce((sum, f) => sum + parseFloat(getAverageRating(f.ratings)), 0) / filteredFeedback.length;
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Faculty Feedback Analytics</div>
+          <div style={{ fontSize: 13, color: t.subtext }}>Student evaluations and ratings</div>
+        </div>
+        <select
+          value={selectedDept}
+          onChange={(e) => setSelectedDept(e.target.value)}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: `1px solid ${t.border}`,
+            background: t.input,
+            color: t.text,
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          {departments.map(dept => (
+            <option key={dept} value={dept}>{dept}</option>
+          ))}
+        </select>
+      </div>
+
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, padding: 20, marginBottom: 20 }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: "#1a9e8f" }}>{overallAvg.toFixed(1)}</div>
+          <div style={{ fontSize: 13, color: t.subtext }}>Overall Average Rating (out of 5)</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+          {filteredFeedback.map(faculty => {
+            const avgRating = getAverageRating(faculty.ratings);
+            const ratingColor = getRatingColor(avgRating);
+            return (
+              <div key={faculty.facultyId} style={{ background: t.rowBg, borderRadius: 12, padding: 16, border: `1px solid ${t.border}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: t.text }}>{faculty.facultyName}</div>
+                    <div style={{ fontSize: 11, color: t.subtext }}>{faculty.department}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: ratingColor }}>{avgRating}</div>
+                    <div style={{ fontSize: 11, color: t.subtext }}>/ 5.0</div>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, color: t.subtext, marginBottom: 4 }}>Rating Distribution</div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[1, 2, 3, 4, 5].map(star => {
+                      const count = faculty.ratings.filter(r => r === star).length;
+                      const percentage = (count / faculty.ratings.length) * 100;
+                      return (
+                        <div key={star} style={{ flex: 1, textAlign: "center" }}>
+                          <div style={{ height: 60, display: "flex", alignItems: "flex-end", marginBottom: 4 }}>
+                            <div style={{ width: "100%", height: `${percentage}%`, background: ratingColor, borderRadius: 4, minHeight: 4 }} />
+                          </div>
+                          <div style={{ fontSize: 10, color: t.subtext }}>{star}★</div>
+                          <div style={{ fontSize: 9, color: t.subtext }}>{count}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                {faculty.comments.length > 0 && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${t.border}` }}>
+                    <div style={{ fontSize: 11, color: t.subtext, fontWeight: 600, marginBottom: 4 }}>Sample Comments:</div>
+                    <div style={{ fontSize: 11, color: t.text }}>"{faculty.comments[0]}"</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Fee Monitoring Component ---
+function FeeMonitoring({ t }) {
+  const [selectedDept, setSelectedDept] = useState("All");
+  const [selectedYear, setSelectedYear] = useState("All");
+  const [selectedSection, setSelectedSection] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const departments = ["All", ...new Set(studentsData.map(s => s.department))];
+  const years = ["All", ...new Set(studentsData.map(s => s.year))];
+  const sections = ["All", "A", "B"];
+
+  const filteredStudents = studentsData.filter(s => {
+    if (selectedDept !== "All" && s.department !== selectedDept) return false;
+    if (selectedYear !== "All" && s.year !== selectedYear) return false;
+    if (selectedSection !== "All" && s.section !== selectedSection) return false;
+    if (selectedStatus !== "All" && s.feeStatus !== selectedStatus) return false;
+    return true;
+  });
+
+  const stats = {
+    total: filteredStudents.length,
+    paid: filteredStudents.filter(s => s.feeStatus === "paid").length,
+    pending: filteredStudents.filter(s => s.feeStatus === "pending").length,
+    overdue: filteredStudents.filter(s => s.feeStatus === "overdue").length,
+    totalPendingAmount: filteredStudents.reduce((sum, s) => sum + s.pendingAmount, 0),
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: t.text, marginBottom: 16 }}>Fee Payment Status</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 20 }}>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 16, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, color: "#3b82f6" }}>💰</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#3b82f6" }}>₹{stats.totalPendingAmount.toLocaleString()}</div>
+            <div style={{ fontSize: 12, color: t.subtext }}>Total Pending</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 16, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, color: "#22c55e" }}>✅</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#22c55e" }}>{stats.paid}</div>
+            <div style={{ fontSize: 12, color: t.subtext }}>Paid Students</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 16, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, color: "#f59e0b" }}>⏳</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#f59e0b" }}>{stats.pending}</div>
+            <div style={{ fontSize: 12, color: t.subtext }}>Pending</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 16, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, color: "#ef4444" }}>⚠️</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#ef4444" }}>{stats.overdue}</div>
+            <div style={{ fontSize: 12, color: t.subtext }}>Overdue</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+          <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Departments</option>
+            {departments.slice(1).map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Years</option>
+            {years.slice(1).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Sections</option>
+            {sections.slice(1).map(s => <option key={s} value={s}>Section {s}</option>)}
+          </select>
+          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Status</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+      </div>
+
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: t.tableHead }}>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Name</th>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Roll No</th>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Dept/Section</th>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Year</th>
+              <th style={{ padding: "12px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Status</th>
+              <th style={{ padding: "12px 16px", textAlign: "right", fontSize: 12, color: t.subtext }}>Pending Amount</th>
+              <th style={{ padding: "12px 16px", textAlign: "center", fontSize: 12, color: t.subtext }}>Action</th>
+             </tr>
+          </thead>
+          <tbody>
+            {filteredStudents.map((student, idx) => (
+              <tr key={student.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                <td style={{ padding: "12px 16px", color: t.text }}>{student.name}</td>
+                <td style={{ padding: "12px 16px", color: t.subtext }}>{student.rollNo}</td>
+                <td style={{ padding: "12px 16px", color: t.subtext }}>{student.department} - {student.section}</td>
+                <td style={{ padding: "12px 16px", color: t.subtext }}>{student.year}</td>
+                <td style={{ padding: "12px 16px" }}>
+                  <span style={{
+                    background: student.feeStatus === "paid" ? "#22c55e22" : student.feeStatus === "pending" ? "#f59e0b22" : "#ef444422",
+                    color: student.feeStatus === "paid" ? "#22c55e" : student.feeStatus === "pending" ? "#f59e0b" : "#ef4444",
+                    padding: "4px 12px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}>
+                    {student.feeStatus.toUpperCase()}
+                  </span>
+                </td>
+                <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: student.pendingAmount > 0 ? "#ef4444" : "#22c55e" }}>
+                  ₹{student.pendingAmount.toLocaleString()}
+                </td>
+                <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                  <button style={{ background: "#1a9e8f22", border: "none", color: "#1a9e8f", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>
+                    Send Reminder
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- Leave/OD Monitoring Component ---
+function LeaveODMonitoring({ t }) {
+  const [selectedDept, setSelectedDept] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [selectedType, setSelectedType] = useState("All");
+
+  const departments = ["All", ...new Set(leaveRequests.map(l => l.department))];
+  const statuses = ["All", "Pending", "Approved", "Rejected"];
+  const types = ["All", "Leave", "OD"];
+
+  const filteredRequests = leaveRequests.filter(req => {
+    if (selectedDept !== "All" && req.department !== selectedDept) return false;
+    if (selectedStatus !== "All" && req.status !== selectedStatus) return false;
+    if (selectedType !== "All" && req.type !== selectedType) return false;
+    return true;
+  });
+
+  const stats = {
+    total: filteredRequests.length,
+    pending: filteredRequests.filter(r => r.status === "Pending").length,
+    approved: filteredRequests.filter(r => r.status === "Approved").length,
+    rejected: filteredRequests.filter(r => r.status === "Rejected").length,
+  };
+
+  const handleStatusUpdate = (id, newStatus) => {
+    alert(`Request #${id} status updated to ${newStatus}`);
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: t.text, marginBottom: 16 }}>Leave & OD Requests</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#3b82f6" }}>{stats.total}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Total Requests</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#f59e0b" }}>{stats.pending}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Pending</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#22c55e" }}>{stats.approved}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Approved</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: "#ef4444" }}>{stats.rejected}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Rejected</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Departments</option>
+            {departments.slice(1).map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Types</option>
+            {types.slice(1).map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Status</option>
+            {statuses.slice(1).map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: t.tableHead }}>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Student</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Dept/Section</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Type</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Dates</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Reason</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Status</th>
+              <th style={{ padding: "12px 12px", textAlign: "center", fontSize: 11, color: t.subtext }}>Actions</th>
+             </tr>
+          </thead>
+          <tbody>
+            {filteredRequests.map((req, idx) => (
+              <tr key={req.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                <td style={{ padding: "12px 12px" }}>
+                  <div style={{ fontWeight: 600, color: t.text }}>{req.studentName}</div>
+                  <div style={{ fontSize: 10, color: t.subtext }}>{req.rollNo}</div>
+                </td>
+                <td style={{ padding: "12px 12px", color: t.subtext }}>{req.department}<br/>{req.year} - {req.section}</td>
+                <td style={{ padding: "12px 12px", color: t.text }}>{req.type}</td>
+                <td style={{ padding: "12px 12px", fontSize: 12, color: t.subtext }}>
+                  {new Date(req.startDate).toLocaleDateString()} - {new Date(req.endDate).toLocaleDateString()}
+                </td>
+                <td style={{ padding: "12px 12px", fontSize: 12, color: t.subtext }}>{req.reason}</td>
+                <td style={{ padding: "12px 12px" }}>
+                  <span style={{
+                    background: req.status === "Approved" ? "#22c55e22" : req.status === "Pending" ? "#f59e0b22" : "#ef444422",
+                    color: req.status === "Approved" ? "#22c55e" : req.status === "Pending" ? "#f59e0b" : "#ef4444",
+                    padding: "4px 10px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}>
+                    {req.status}
+                  </span>
+                </td>
+                <td style={{ padding: "12px 12px", textAlign: "center" }}>
+                  <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
+                    {req.status === "Pending" && (
+                      <>
+                        <button onClick={() => handleStatusUpdate(req.id, "Approved")} style={{ background: "#22c55e22", border: "none", color: "#22c55e", padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11 }}>Approve</button>
+                        <button onClick={() => handleStatusUpdate(req.id, "Rejected")} style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11 }}>Reject</button>
+                      </>
+                    )}
+                    {req.document && (
+                      <button style={{ background: "#3b82f622", border: "none", color: "#3b82f6", padding: "4px 10px", borderRadius: 6, cursor: "pointer", fontSize: 11 }}>View Doc</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- Certificates Monitoring Component ---
+function CertificatesMonitoring({ t }) {
+  const [selectedDept, setSelectedDept] = useState("All");
+  const [selectedYear, setSelectedYear] = useState("All");
+  const [selectedSection, setSelectedSection] = useState("All");
+  const [selectedType, setSelectedType] = useState("All");
+
+  const departments = ["All", ...new Set(certificatesData.map(c => c.department))];
+  const years = ["All", ...new Set(certificatesData.map(c => c.year))];
+  const sections = ["All", "A", "B"];
+  const types = ["All", ...new Set(certificatesData.map(c => c.type))];
+
+  const filteredCertificates = certificatesData.filter(cert => {
+    if (selectedDept !== "All" && cert.department !== selectedDept) return false;
+    if (selectedYear !== "All" && cert.year !== selectedYear) return false;
+    if (selectedSection !== "All" && cert.section !== selectedSection) return false;
+    if (selectedType !== "All" && cert.type !== selectedType) return false;
+    return true;
+  });
+
+  const stats = {
+    total: filteredCertificates.length,
+    verified: filteredCertificates.filter(c => c.verified).length,
+    pendingVerification: filteredCertificates.filter(c => !c.verified).length,
+    byType: filteredCertificates.reduce((acc, c) => {
+      acc[c.type] = (acc[c.type] || 0) + 1;
+      return acc;
+    }, {})
+  };
+
+  const handleVerify = (id) => {
+    alert(`Certificate #${id} verification status updated`);
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: t.text, marginBottom: 16 }}>Student Certificates</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#3b82f6" }}>{stats.total}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Total Certificates</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#22c55e" }}>{stats.verified}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Verified</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#f59e0b" }}>{stats.pendingVerification}</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Pending Verification</div>
+          </div>
+          <div style={{ background: t.panelBg, borderRadius: 12, padding: 12, border: `1px solid ${t.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 13, color: t.subtext, marginBottom: 4 }}>By Type</div>
+            <div style={{ fontSize: 11, color: t.text }}>{Object.entries(stats.byType).map(([k,v]) => `${k}: ${v}`).join(", ")}</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Departments</option>
+            {departments.slice(1).map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Years</option>
+            {years.slice(1).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Sections</option>
+            {sections.slice(1).map(s => <option key={s} value={s}>Section {s}</option>)}
+          </select>
+          <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+            <option value="All">All Types</option>
+            {types.slice(1).map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: t.tableHead }}>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Student</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Dept/Section</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Certificate</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Type</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Issue Date</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Issuer</th>
+              <th style={{ padding: "12px 12px", textAlign: "left", fontSize: 11, color: t.subtext }}>Status</th>
+              <th style={{ padding: "12px 12px", textAlign: "center", fontSize: 11, color: t.subtext }}>Action</th>
+             </tr>
+          </thead>
+          <tbody>
+            {filteredCertificates.map((cert, idx) => (
+              <tr key={cert.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                <td style={{ padding: "12px 12px" }}>
+                  <div style={{ fontWeight: 600, color: t.text }}>{cert.studentName}</div>
+                  <div style={{ fontSize: 10, color: t.subtext }}>{cert.rollNo}</div>
+                </td>
+                <td style={{ padding: "12px 12px", color: t.subtext }}>{cert.department}<br/>{cert.year} - {cert.section}</td>
+                <td style={{ padding: "12px 12px", color: t.text }}>{cert.certificateName}</td>
+                <td style={{ padding: "12px 12px" }}>
+                  <span style={{ background: "#3b82f622", color: "#3b82f6", padding: "2px 8px", borderRadius: 12, fontSize: 11 }}>{cert.type}</span>
+                </td>
+                <td style={{ padding: "12px 12px", fontSize: 12, color: t.subtext }}>{new Date(cert.issueDate).toLocaleDateString()}</td>
+                <td style={{ padding: "12px 12px", fontSize: 12, color: t.subtext }}>{cert.issuer}</td>
+                <td style={{ padding: "12px 12px" }}>
+                  <span style={{
+                    background: cert.verified ? "#22c55e22" : "#f59e0b22",
+                    color: cert.verified ? "#22c55e" : "#f59e0b",
+                    padding: "4px 10px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}>
+                    {cert.verified ? "Verified" : "Pending"}
+                  </span>
+                </td>
+                <td style={{ padding: "12px 12px", textAlign: "center" }}>
+                  {!cert.verified && (
+                    <button onClick={() => handleVerify(cert.id)} style={{ background: "#1a9e8f22", border: "none", color: "#1a9e8f", padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: 11 }}>
+                      Verify
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- Timetable Management with Conflict Detection ---
+function TimetableManagement({ t }) {
+  const [timetable, setTimetable] = useState(initialTimetable);
+  const [selectedDay, setSelectedDay] = useState("Monday");
+  const [selectedDepartment, setSelectedDepartment] = useState("All");
+  const [selectedYear, setSelectedYear] = useState("All");
+  const [selectedSection, setSelectedSection] = useState("All");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState("");
+  
+  const [newEntry, setNewEntry] = useState({
+    day: "Monday",
+    time: "09:00-10:00",
+    subject: "",
+    faculty: "",
+    department: "",
+    year: "",
+    section: "",
+    room: ""
+  });
+
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const departments = ["All", ...new Set(timetable.map(t => t.department))];
+  const years = ["All", "1st", "2nd", "3rd", "4th"];
+  const sections = ["All", "A", "B"];
+  const faculties = facultyData.map(f => f.name);
+  const timeSlots = ["09:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-13:00", "14:00-15:00", "15:00-16:00", "16:00-17:00"];
+
+  const filteredTimetable = timetable.filter(entry => {
+    if (selectedDay !== "All" && entry.day !== selectedDay) return false;
+    if (selectedDepartment !== "All" && entry.department !== selectedDepartment) return false;
+    if (selectedYear !== "All" && entry.year !== selectedYear) return false;
+    if (selectedSection !== "All" && entry.section !== selectedSection) return false;
+    return true;
+  });
+
+  // Conflict detection function
+  const checkConflicts = (newEntry) => {
+    const conflicts = [];
+    
+    // Check faculty time conflict
+    const facultyConflict = timetable.find(entry => 
+      entry.day === newEntry.day && 
+      entry.time === newEntry.time && 
+      entry.faculty === newEntry.faculty
+    );
+    if (facultyConflict) {
+      conflicts.push(`Faculty ${newEntry.faculty} already has a class at this time (${facultyConflict.subject} in ${facultyConflict.room})`);
+    }
+    
+    // Check room conflict
+    const roomConflict = timetable.find(entry => 
+      entry.day === newEntry.day && 
+      entry.time === newEntry.time && 
+      entry.room === newEntry.room
+    );
+    if (roomConflict) {
+      conflicts.push(`Room ${newEntry.room} is already occupied for ${roomConflict.subject} (${roomConflict.faculty})`);
+    }
+    
+    // Check same class group conflict (same department, year, section at same time)
+    const classConflict = timetable.find(entry => 
+      entry.day === newEntry.day && 
+      entry.time === newEntry.time && 
+      entry.department === newEntry.department &&
+      entry.year === newEntry.year &&
+      entry.section === newEntry.section
+    );
+    if (classConflict) {
+      conflicts.push(`This class group already has ${classConflict.subject} scheduled at this time`);
+    }
+    
+    return conflicts;
+  };
+
+  const handleAddEntry = () => {
+    if (!newEntry.subject || !newEntry.faculty || !newEntry.department || !newEntry.year || !newEntry.section || !newEntry.room) {
+      setConflictMessage("Please fill all fields");
+      return;
+    }
+    
+    const conflicts = checkConflicts(newEntry);
+    if (conflicts.length > 0) {
+      setConflictMessage(`⚠️ Conflicts detected:\n${conflicts.join("\n")}`);
+      return;
+    }
+    
+    const entry = {
+      id: Date.now(),
+      ...newEntry
+    };
+    setTimetable([...timetable, entry]);
+    setNewEntry({
+      day: "Monday",
+      time: "09:00-10:00",
+      subject: "",
+      faculty: "",
+      department: "",
+      year: "",
+      section: "",
+      room: ""
+    });
+    setShowAddForm(false);
+    setConflictMessage("");
+  };
+
+  const handleDeleteEntry = (id) => {
+    setTimetable(timetable.filter(entry => entry.id !== id));
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Timetable Management</div>
+          <div style={{ fontSize: 13, color: t.subtext }}>Schedule classes with automatic conflict detection</div>
+        </div>
+        <button 
+          onClick={() => setShowAddForm(!showAddForm)}
+          style={{
+            background: "linear-gradient(135deg,#1a9e8f,#17b897)",
+            border: "none",
+            borderRadius: 8,
+            padding: "10px 20px",
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          {showAddForm ? "Cancel" : "+ Add Class"}
+        </button>
+      </div>
+
+      {/* Add Class Form */}
+      {showAddForm && (
+        <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, padding: 20, marginBottom: 20 }}>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: t.text }}>Add New Class</div>
+          {conflictMessage && (
+            <div style={{ background: "#ef444422", color: "#ef4444", padding: 12, borderRadius: 8, marginBottom: 16, whiteSpace: "pre-line", fontSize: 13 }}>
+              {conflictMessage}
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+            <select value={newEntry.day} onChange={e => setNewEntry({...newEntry, day: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              {days.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={newEntry.time} onChange={e => setNewEntry({...newEntry, time: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <input placeholder="Subject" value={newEntry.subject} onChange={e => setNewEntry({...newEntry, subject: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }} />
+            <select value={newEntry.faculty} onChange={e => setNewEntry({...newEntry, faculty: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              <option value="">Select Faculty</option>
+              {faculties.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <select value={newEntry.department} onChange={e => setNewEntry({...newEntry, department: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              <option value="">Select Department</option>
+              {departments.slice(1).map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={newEntry.year} onChange={e => setNewEntry({...newEntry, year: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              <option value="">Select Year</option>
+              {years.slice(1).map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <select value={newEntry.section} onChange={e => setNewEntry({...newEntry, section: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+              <option value="">Select Section</option>
+              {sections.slice(1).map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <input placeholder="Room Number" value={newEntry.room} onChange={e => setNewEntry({...newEntry, room: e.target.value})} style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }} />
+          </div>
+          <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+            <button onClick={handleAddEntry} style={{ background: "#1a9e8f", border: "none", borderRadius: 8, padding: "10px 24px", color: "#fff", fontWeight: 600, cursor: "pointer" }}>
+              Add to Timetable
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <select value={selectedDay} onChange={e => setSelectedDay(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+          <option value="All">All Days</option>
+          {days.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+          <option value="All">All Departments</option>
+          {departments.slice(1).map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+          <option value="All">All Years</option>
+          {years.slice(1).map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <select value={selectedSection} onChange={e => setSelectedSection(e.target.value)} style={{ padding: "8px 12px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text }}>
+          <option value="All">All Sections</option>
+          {sections.slice(1).map(s => <option key={s} value={s}>Section {s}</option>)}
+        </select>
+      </div>
+
+      {/* Timetable Display */}
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: t.tableHead }}>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Day</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Time</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Subject</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Faculty</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Department</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Year/Sec</th>
+              <th style={{ padding: "12px", textAlign: "left", fontSize: 12, color: t.subtext }}>Room</th>
+              <th style={{ padding: "12px", textAlign: "center", fontSize: 12, color: t.subtext }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTimetable.length === 0 ? (
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: "center", color: t.subtext }}>No classes scheduled</td></tr>
+            ) : (
+              filteredTimetable.map((entry, idx) => (
+                <tr key={entry.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                  <td style={{ padding: "12px", color: t.text }}>{entry.day}</td>
+                  <td style={{ padding: "12px", color: t.subtext }}>{entry.time}</td>
+                  <td style={{ padding: "12px", fontWeight: 600, color: t.text }}>{entry.subject}</td>
+                  <td style={{ padding: "12px", color: t.subtext }}>{entry.faculty}</td>
+                  <td style={{ padding: "12px", color: t.subtext }}>{entry.department}</td>
+                  <td style={{ padding: "12px", color: t.subtext }}>{entry.year} - {entry.section}</td>
+                  <td style={{ padding: "12px", color: t.subtext }}>{entry.room}</td>
+                  <td style={{ padding: "12px", textAlign: "center" }}>
+                    <button onClick={() => handleDeleteEntry(entry.id)} style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// --- Live Exam Seating Arrangement Component ---
+function ExamSeatingArrangement({ t }) {
+  const [exams, setExams] = useState(examScheduleData);
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState({});
+
+  // Update countdown timers
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newRemaining = {};
+      exams.forEach(exam => {
+        const examTime = new Date(exam.date).getTime();
+        const now = Date.now();
+        const diff = examTime - now;
+        
+        if (diff <= 0) {
+          newRemaining[exam.id] = { status: "expired", text: "Exam in progress" };
+        } else if (diff <= 20 * 60 * 1000) { // 20 minutes
+          const mins = Math.floor(diff / 60000);
+          const secs = Math.floor((diff % 60000) / 1000);
+          newRemaining[exam.id] = { status: "live", text: `${mins}m ${secs}s`, isLive: true };
+        } else {
+          const hours = Math.floor(diff / 3600000);
+          const mins = Math.floor((diff % 3600000) / 60000);
+          newRemaining[exam.id] = { status: "upcoming", text: `${hours}h ${mins}m`, isLive: false };
+        }
+      });
+      setTimeRemaining(newRemaining);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [exams]);
+
+  // Generate seating arrangement for an exam
+  const generateSeatingArrangement = (exam) => {
+    const students = studentsData.filter(s => s.department === exam.department && s.year === exam.year);
+    const rows = 10;
+    const cols = 6;
+    const seats = [];
+    
+    for (let i = 0; i < Math.min(students.length, rows * cols); i++) {
+      const row = Math.floor(i / cols) + 1;
+      const col = (i % cols) + 1;
+      seats.push({
+        student: students[i],
+        row: row,
+        col: col,
+        seatNo: `${String.fromCharCode(64 + row)}${col}`
+      });
+    }
+    
+    return seats;
+  };
+
+  const handleViewSeating = (exam) => {
+    const seats = generateSeatingArrangement(exam);
+    setSelectedExam({ ...exam, seats });
+  };
+
+  const isSeatingAvailable = (exam) => {
+    const remaining = timeRemaining[exam.id];
+    return remaining && (remaining.status === "live" || remaining.status === "expired");
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Exam Seating Arrangement</div>
+        <div style={{ fontSize: 13, color: t.subtext }}>Live seating view - Available 20 minutes before exam</div>
+      </div>
+
+      {/* Exams List */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16, marginBottom: 24 }}>
+        {exams.map(exam => {
+          const remaining = timeRemaining[exam.id];
+          const isLive = remaining?.status === "live";
+          const isExpired = remaining?.status === "expired";
+          const examTime = new Date(exam.date);
+          
+          return (
+            <div key={exam.id} style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, padding: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: t.text }}>{exam.subject}</div>
+                  <div style={{ fontSize: 12, color: t.subtext }}>{exam.department} - {exam.year} Year</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: isLive ? "#22c55e" : isExpired ? "#ef4444" : "#f59e0b" }}>
+                    {isLive ? "🔴 LIVE" : isExpired ? "In Progress" : examTime.toLocaleTimeString()}
+                  </div>
+                  {remaining && (
+                    <div style={{ fontSize: 11, color: isLive ? "#22c55e" : t.subtext }}>
+                      {isLive ? "Seating available in: " : "Starts in: "}
+                      <span style={{ fontWeight: 700 }}>{remaining.text}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                <span style={{ background: t.input, padding: "4px 8px", borderRadius: 6, fontSize: 11 }}>📍 {exam.room}</span>
+                <span style={{ background: t.input, padding: "4px 8px", borderRadius: 6, fontSize: 11 }}>⏱️ {exam.duration}</span>
+                <span style={{ background: t.input, padding: "4px 8px", borderRadius: 6, fontSize: 11 }}>👥 {exam.totalStudents} students</span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button 
+                  onClick={() => handleViewSeating(exam)}
+                  disabled={!isSeatingAvailable(exam)}
+                  style={{
+                    flex: 1,
+                    background: isSeatingAvailable(exam) ? "linear-gradient(135deg,#1a9e8f,#17b897)" : t.input,
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "8px",
+                    color: isSeatingAvailable(exam) ? "#fff" : t.subtext,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: isSeatingAvailable(exam) ? "pointer" : "not-allowed"
+                  }}
+                >
+                  {isLive ? "View Live Seating" : isExpired ? "Seating Active" : "Unavailable (20min before)"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Seating Arrangement Modal */}
+      {selectedExam && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: t.bg, borderRadius: 20, maxWidth: "90vw", maxHeight: "90vh", overflow: "auto", padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: t.text }}>Seating Arrangement</div>
+                <div style={{ fontSize: 13, color: t.subtext }}>{selectedExam.subject} - {selectedExam.department} ({selectedExam.year} Year)</div>
+                <div style={{ fontSize: 12, color: t.subtext }}>Room: {selectedExam.room} | {new Date(selectedExam.date).toLocaleString()}</div>
+              </div>
+              <button onClick={() => setSelectedExam(null)} style={{ background: "#ef4444", border: "none", borderRadius: 8, padding: "8px 16px", color: "#fff", cursor: "pointer" }}>Close</button>
+            </div>
+            
+            {/* Seating Grid */}
+            <div style={{ overflowX: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+                <div style={{ background: "#1a2c42", padding: "8px 24px", borderRadius: 8, fontSize: 14, fontWeight: 600, color: "#fff" }}>📋 TEACHER'S DESK</div>
+              </div>
+              
+              {Array.from({ length: Math.ceil(selectedExam.seats.length / 6) }).map((_, rowIdx) => (
+                <div key={rowIdx} style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 12 }}>
+                  {selectedExam.seats.slice(rowIdx * 6, (rowIdx + 1) * 6).map((seat, colIdx) => (
+                    <div key={colIdx} style={{
+                      width: 100,
+                      padding: 10,
+                      background: t.panelBg,
+                      border: `1px solid ${t.border}`,
+                      borderRadius: 8,
+                      textAlign: "center"
+                    }}>
+                      <div style={{ fontSize: 10, color: t.subtext, marginBottom: 4 }}>{seat.seatNo}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{seat.student.name.split(" ")[0]}</div>
+                      <div style={{ fontSize: 10, color: t.subtext }}>{seat.student.rollNo}</div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              
+              <div style={{ marginTop: 20, textAlign: "center", fontSize: 12, color: t.subtext }}>
+                Total Students: {selectedExam.seats.length} | Rows: {Math.ceil(selectedExam.seats.length / 6)} | Columns: 6
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- Student Profile Modal ---
+function StudentProfileModal({ student, onClose, t }) {
+  if (!student) return null;
+  
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: t.bg, borderRadius: 20, width: 500, maxWidth: "90vw", maxHeight: "85vh", overflow: "auto", padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: `1px solid ${t.border}`, paddingBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 50, height: 50, borderRadius: 25, background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#fff" }}>
+              {student.name.charAt(0)}
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: t.text }}>{student.name}</div>
+              <div style={{ fontSize: 12, color: t.subtext }}>{student.rollNo}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "#ef444422", border: "none", borderRadius: 8, padding: "6px 12px", color: "#ef4444", cursor: "pointer" }}>✕ Close</button>
+        </div>
+        
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 8 }}>
+            <div style={{ color: t.subtext }}>Department:</div>
+            <div style={{ color: t.text, fontWeight: 500 }}>{student.department}</div>
+            <div style={{ color: t.subtext }}>Year & Section:</div>
+            <div style={{ color: t.text, fontWeight: 500 }}>{student.year} Year - Section {student.section}</div>
+            <div style={{ color: t.subtext }}>Attendance:</div>
+            <div style={{ color: student.attendance >= 75 ? "#22c55e" : "#ef4444", fontWeight: 700 }}>{student.attendance}%</div>
+            <div style={{ color: t.subtext }}>CGPA:</div>
+            <div style={{ color: student.cgpa >= 8 ? "#22c55e" : "#f59e0b", fontWeight: 700 }}>{student.cgpa}</div>
+            <div style={{ color: t.subtext }}>Email:</div>
+            <div style={{ color: t.text }}>{student.email}</div>
+            <div style={{ color: t.subtext }}>Phone:</div>
+            <div style={{ color: t.text }}>{student.phone}</div>
+            <div style={{ color: t.subtext }}>Parent Contact:</div>
+            <div style={{ color: t.text }}>{student.parentContact}</div>
+            <div style={{ color: t.subtext }}>Date of Birth:</div>
+            <div style={{ color: t.text }}>{student.dob}</div>
+            <div style={{ color: t.subtext }}>Address:</div>
+            <div style={{ color: t.text }}>{student.address}</div>
+            <div style={{ color: t.subtext }}>Fee Status:</div>
+            <div style={{ color: student.feeStatus === "paid" ? "#22c55e" : student.feeStatus === "pending" ? "#f59e0b" : "#ef4444", fontWeight: 700 }}>
+              {student.feeStatus.toUpperCase()} {student.pendingAmount > 0 ? `(₹${student.pendingAmount.toLocaleString()})` : ""}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Faculty Profile Modal ---
+function FacultyProfileModal({ faculty, onClose, t }) {
+  if (!faculty) return null;
+  
+  const feedback = facultyFeedback.find(f => f.facultyName === faculty.name);
+  const avgRating = feedback ? (feedback.ratings.reduce((a,b) => a+b,0) / feedback.ratings.length).toFixed(1) : "N/A";
+  
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: t.bg, borderRadius: 20, width: 500, maxWidth: "90vw", maxHeight: "85vh", overflow: "auto", padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: `1px solid ${t.border}`, paddingBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 50, height: 50, borderRadius: 25, background: "linear-gradient(135deg,#a855f7,#6b21a5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#fff" }}>
+              {faculty.name.charAt(0)}
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: t.text }}>{faculty.name}</div>
+              <div style={{ fontSize: 12, color: t.subtext }}>{faculty.designation}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: "#ef444422", border: "none", borderRadius: 8, padding: "6px 12px", color: "#ef4444", cursor: "pointer" }}>✕ Close</button>
+        </div>
+        
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 8 }}>
+            <div style={{ color: t.subtext }}>Department:</div>
+            <div style={{ color: t.text, fontWeight: 500 }}>{faculty.department}</div>
+            <div style={{ color: t.subtext }}>Qualification:</div>
+            <div style={{ color: t.text }}>{faculty.qualification}</div>
+            <div style={{ color: t.subtext }}>Experience:</div>
+            <div style={{ color: t.text }}>{faculty.experience}</div>
+            <div style={{ color: t.subtext }}>Specialization:</div>
+            <div style={{ color: t.text }}>{faculty.specialization}</div>
+            <div style={{ color: t.subtext }}>Email:</div>
+            <div style={{ color: t.text }}>{faculty.email}</div>
+            <div style={{ color: t.subtext }}>Phone:</div>
+            <div style={{ color: t.text }}>{faculty.phone}</div>
+            <div style={{ color: t.subtext }}>Average Rating:</div>
+            <div style={{ color: "#f59e0b", fontWeight: 700 }}>{avgRating} / 5.0</div>
+          </div>
+          
+          {feedback && feedback.comments.length > 0 && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${t.border}` }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 8 }}>Student Feedback Comments:</div>
+              {feedback.comments.map((comment, i) => (
+                <div key={i} style={{ fontSize: 12, color: t.subtext, padding: "4px 0" }}>• "{comment}"</div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- IMS Bot Component (Admin Version) ---
+function IMSBot({ t }) {
+  const [messages, setMessages] = useState([
+    {
+      role: "bot",
+      text: "👋 Hi Admin! I'm the **IMS Bot**, your AI campus assistant.\n\nI can help with attendance, timetable, exam dates, announcements, student records, fee status, leave requests, certificates, and more. What would you like to know?",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    }
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const quickQuestions = [
+    "Total students in college?",
+    "Average attendance?",
+    "Fee collection summary?",
+    "Pending leave requests?",
+    "Faculty feedback summary?",
+    "Certificate verification status?",
+  ];
+
+  const handleSend = (text) => {
+    const userText = text || input.trim();
+    if (!userText || loading) return;
+
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const newMessages = [...messages, { role: "user", text: userText, time }];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+
+    setTimeout(() => {
+      let botReply = "";
+      const lowerQuery = userText.toLowerCase();
+
+      if (lowerQuery.includes("total student") || lowerQuery.includes("how many student")) {
+        const totalPaid = studentsData.filter(s => s.feeStatus === "paid").length;
+        const totalPending = studentsData.filter(s => s.feeStatus === "pending").length;
+        const totalOverdue = studentsData.filter(s => s.feeStatus === "overdue").length;
+        botReply = `📊 **Student Statistics**\n\nTotal Students: **${studentsData.length}**\n\nFee Status Breakdown:\n• Paid: ${totalPaid} students\n• Pending: ${totalPending} students\n• Overdue: ${totalOverdue} students\n\nTotal pending amount: ₹${studentsData.reduce((sum, s) => sum + s.pendingAmount, 0).toLocaleString()}`;
+      }
+      else if (lowerQuery.includes("average attendance") || lowerQuery.includes("attendance overall")) {
+        botReply = `📈 **Attendance Overview**\n\nOverall Average: **${reportsData.attendance.overall}%**\n\nDepartment-wise:\n${reportsData.attendance.byDepartment.map(d => `• ${d.dept}: ${d.percentage}% ${d.trend}`).join("\n")}\n\n*Trend: +2% from last month*`;
+      }
+      else if (lowerQuery.includes("fee") || lowerQuery.includes("collection") || lowerQuery.includes("payment")) {
+        const totalPendingAmount = studentsData.reduce((sum, s) => sum + s.pendingAmount, 0);
+        const pendingCount = studentsData.filter(s => s.feeStatus === "pending").length;
+        const overdueCount = studentsData.filter(s => s.feeStatus === "overdue").length;
+        
+        const deptPending = {};
+        studentsData.forEach(s => {
+          if (s.pendingAmount > 0) {
+            deptPending[s.department] = (deptPending[s.department] || 0) + s.pendingAmount;
+          }
+        });
+        
+        const deptSummary = Object.entries(deptPending).map(([dept, amt]) => `• ${dept}: ₹${amt.toLocaleString()}`).join("\n");
+        
+        botReply = `💰 **Fee Collection Summary**\n\nTotal Pending Amount: ₹${totalPendingAmount.toLocaleString()}\n\nStatus:\n• Pending: ${pendingCount} students\n• Overdue: ${overdueCount} students\n\nDepartment-wise pending:\n${deptSummary || "No pending amounts"}`;
+      }
+      else if (lowerQuery.includes("leave") && (lowerQuery.includes("pending") || lowerQuery.includes("request"))) {
+        const pendingLeaves = leaveRequests.filter(r => r.status === "Pending");
+        botReply = `📋 **Pending Leave/OD Requests** (${pendingLeaves.length})\n\n${pendingLeaves.map(l => `• ${l.studentName} (${l.department}) - ${l.type} on ${new Date(l.startDate).toLocaleDateString()}: ${l.reason}`).join("\n") || "No pending requests"}`;
+      }
+      else if (lowerQuery.includes("feedback") || lowerQuery.includes("faculty rating")) {
+        const avgRatings = facultyFeedback.map(f => ({
+          name: f.facultyName,
+          avg: (f.ratings.reduce((a,b) => a+b,0) / f.ratings.length).toFixed(1)
+        })).sort((a,b) => b.avg - a.avg);
+        botReply = `⭐ **Faculty Feedback Summary**\n\nTop Rated Faculty:\n${avgRatings.slice(0,3).map((f,i) => `${i+1}. ${f.name} - ${f.avg}/5.0`).join("\n")}\n\nOverall Average: ${(avgRatings.reduce((sum,f) => sum + parseFloat(f.avg),0) / avgRatings.length).toFixed(1)}/5.0`;
+      }
+      else if (lowerQuery.includes("certificate") && (lowerQuery.includes("pending") || lowerQuery.includes("verify"))) {
+        const pendingCerts = certificatesData.filter(c => !c.verified);
+        botReply = `📜 **Pending Certificate Verification** (${pendingCerts.length})\n\n${pendingCerts.map(c => `• ${c.studentName} (${c.department}) - ${c.certificateName} (${c.type})\n  Issued by: ${c.issuer} on ${new Date(c.issueDate).toLocaleDateString()}`).join("\n\n") || "All certificates verified!"}`;
+      }
+      else {
+        botReply = `I can help you with:\n• Student statistics & fee status\n• Attendance data\n• Faculty feedback summaries\n• Pending leave/OD requests\n• Certificate verification status\n• Department performance\n\nWhat would you like to know, Admin?`;
+      }
+
+      setMessages(prev => [...prev, { role: "bot", text: botReply, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const formatText = (text) => {
+    return text.split("\n").map((line, i, arr) => (
+      <span key={i}>
+        {line.split(/\*\*(.*?)\*\*/g).map((part, j) => 
+          j % 2 === 1 ? <strong key={j}>{part}</strong> : part
+        )}
+        {i < arr.length - 1 && <br />}
+      </span>
+    ));
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 140px)" }}>
+      <div style={{
+        background: t.panelBg,
+        borderRadius: 14,
+        border: `1px solid ${t.border}`,
+        padding: "16px 20px",
+        marginBottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🤖</div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: t.text }}>IMS Bot (Admin)</div>
+            <div style={{ fontSize: 12, color: "#22c55e", display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} /> Online · Admin Access
+            </div>
+          </div>
+        </div>
+        <button onClick={() => setMessages([messages[0]])} style={{
+          background: t.input,
+          border: `1px solid ${t.border}`,
+          color: t.text,
+          borderRadius: 6,
+          padding: "5px 14px",
+          fontSize: 12,
+          cursor: "pointer"
+        }}>Clear Chat</button>
+      </div>
+
+      <div style={{
+        background: t.input,
+        borderLeft: `1px solid ${t.border}`,
+        borderRight: `1px solid ${t.border}`,
+        padding: "10px 16px",
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap"
+      }}>
+        {quickQuestions.map((q, i) => (
+          <button key={i} onClick={() => handleSend(q)} style={{
+            background: t.rowBg,
+            border: `1px solid ${t.border}`,
+            color: t.subtext,
+            borderRadius: 20,
+            padding: "5px 12px",
+            fontSize: 12,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+          }}>{q}</button>
+        ))}
+      </div>
+
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        background: t.bg,
+        borderLeft: `1px solid ${t.border}`,
+        borderRight: `1px solid ${t.border}`,
+        padding: "20px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 16
+      }}>
+        {messages.map((msg, i) => (
+          <div key={i} style={{
+            display: "flex",
+            gap: 12,
+            justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
+            alignItems: "flex-end"
+          }}>
+            {msg.role === "bot" && (
+              <div style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 16,
+                flexShrink: 0
+              }}>🤖</div>
+            )}
+            <div style={{ maxWidth: "70%" }}>
+              <div style={{
+                background: msg.role === "user" ? "linear-gradient(135deg,#1a9e8f,#17b897)" : t.panelBg,
+                border: msg.role === "bot" ? `1px solid ${t.border}` : "none",
+                borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                padding: "12px 16px",
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: t.text
+              }}>
+                {formatText(msg.text)}
+              </div>
+              <div style={{ fontSize: 11, color: t.subtext, marginTop: 4, textAlign: msg.role === "user" ? "right" : "left" }}>{msg.time}</div>
+            </div>
+            {msg.role === "user" && (
+              <div style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 12,
+                flexShrink: 0,
+                color: "#fff"
+              }}>AD</div>
+            )}
+          </div>
+        ))}
+        {loading && (
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🤖</div>
+            <div style={{ background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: "14px 14px 14px 4px", padding: "14px 18px", display: "flex", gap: 5 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#1a9e8f", animation: "bounce 1.2s infinite", animationDelay: `${i * 0.2}s` }} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        background: t.panelBg,
+        border: `1px solid ${t.border}`,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: 14,
+        borderBottomRightRadius: 14,
+        padding: "14px 16px",
+        display: "flex",
+        gap: 10,
+        alignItems: "center"
+      }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleSend()}
+          placeholder="Ask about students, fees, leaves, certificates, feedback..."
+          style={{
+            flex: 1,
+            background: t.input,
+            border: `1px solid ${t.border}`,
+            borderRadius: 10,
+            padding: "12px 16px",
+            color: t.text,
+            fontSize: 14,
+            outline: "none"
+          }}
+        />
+        <button onClick={() => handleSend()} disabled={loading || !input.trim()} style={{
+          width: 44,
+          height: 44,
+          borderRadius: 10,
+          border: "none",
+          background: input.trim() && !loading ? "linear-gradient(135deg,#1a9e8f,#17b897)" : t.input,
+          color: "#fff",
+          fontSize: 18,
+          cursor: input.trim() && !loading ? "pointer" : "default",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>▶</button>
+      </div>
+
+      <style>{`@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }`}</style>
+    </div>
+  );
+}
+
+// --- Main Admin Dashboard Component ---
+function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "", tag: "GENERAL" });
+  const [localAnnouncements, setLocalAnnouncements] = useState(announcementsData);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedFaculty, setSelectedFaculty] = useState(null);
+
+  const handleAddAnnouncement = () => {
+    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) return;
+    const tagColors = {
+      "URGENT": "#ef4444",
+      "EVENT": "#f59e0b",
+      "ACADEMIC": "#3b82f6",
+      "MEETING": "#3b82f6",
+      "EXAM": "#ef4444",
+      "HOLIDAY": "#22c55e",
+      "GENERAL": "#1a9e8f"
+    };
+    const newItem = {
+      id: Date.now(),
+      title: newAnnouncement.title,
+      content: newAnnouncement.content,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      tag: newAnnouncement.tag,
+      tagColor: tagColors[newAnnouncement.tag] || "#7a9ab5",
+    };
+    setLocalAnnouncements([newItem, ...localAnnouncements]);
+    setNewAnnouncement({ title: "", content: "", tag: "GENERAL" });
+  };
+
+  const stats = [
+    { icon: "👥", value: adminStats.totalStudents.toLocaleString(), label: "TOTAL STUDENTS", subtext: adminStats.studentsChange, color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#101e2e)" },
+    { icon: "🏫", value: adminStats.totalFaculty, label: "TOTAL FACULTY", subtext: adminStats.facultySubtext, color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#101e2e)" },
+    { icon: "📊", value: `${adminStats.avgAttendance}%`, label: "AVG ATTENDANCE", subtext: adminStats.attendanceChange, color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#101e2e)" },
+    { icon: "🏛️", value: adminStats.totalDepts, label: "DEPARTMENTS", subtext: adminStats.deptSubtext, color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#101e2e)" },
+  ];
+
+  const filteredStudents = studentsData.filter(s => 
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredFaculty = facultyData.filter(f =>
+    f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const navItems = [
+    { id: "overview", label: "Dashboard", icon: "📊", section: "MAIN" },
+    { id: "students", label: "Students", icon: "👥", section: "MANAGEMENT" },
+    { id: "faculty", label: "Faculty", icon: "🏫", section: "MANAGEMENT" },
+    { id: "departments", label: "Departments", icon: "🏛️", section: "MANAGEMENT" },
+    { id: "timetable", label: "Timetable", icon: "📅", section: "MANAGEMENT" },
+    { id: "exam-seating", label: "Exam Seating", icon: "🎯", section: "MANAGEMENT" },
+    { id: "feedback", label: "Feedback Stats", icon: "⭐", section: "ANALYTICS" },
+    { id: "fee-monitoring", label: "Fee Monitoring", icon: "💰", section: "FINANCE" },
+    { id: "leave-monitoring", label: "Leave/OD", icon: "📋", section: "REQUESTS" },
+    { id: "certificates", label: "Certificates", icon: "🏆", section: "REQUESTS" },
+    { id: "announcements", label: "Announcements", icon: "📢", section: "MANAGEMENT" },
+    { id: "reports", label: "Reports", icon: "📈", section: "ANALYTICS" },
+    { id: "imsbot", label: "IMS Bot", icon: "🤖", section: "TOOLS" },
+  ];
+
+  const sections = ["MAIN", "MANAGEMENT", "ANALYTICS", "FINANCE", "REQUESTS", "TOOLS"];
+
+  return (
+    <div style={{
+      display: "flex",
+      minHeight: "100vh",
+      width: "100vw",
+      background: t.bg,
+      fontFamily: "'Segoe UI', sans-serif",
+      color: t.text,
+      overflow: "hidden",
+      transition: "all 0.3s",
+    }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: 260,
+        background: t.sidebar,
+        borderRight: `1px solid ${t.border}`,
+        display: "flex",
+        flexDirection: "column",
+        padding: "24px 0",
+        flexShrink: 0,
+        overflowY: "auto",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 20px 28px" }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <span style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>MS</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>CollegeIMS</div>
+            <div style={{ fontSize: 11, color: t.subtext }}>Admin Portal</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 24, padding: "0 20px" }}>
+          <div style={{
+            background: t.navActive,
+            borderRadius: 12,
+            padding: "12px 16px",
+            border: `1px solid ${t.border}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e8f,#0e6e9e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: "#fff" }}>AD</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Admin User</div>
+                <div style={{ fontSize: 11, color: t.subtext }}>ADMIN01</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <nav style={{ flex: 1 }}>
+          {sections.map(sec => (
+            <div key={sec}>
+              <div style={{ fontSize: 10, color: t.sectionLabel, fontWeight: 700, letterSpacing: 1, padding: "12px 20px 4px" }}>{sec}</div>
+              {navItems.filter(n => n.section === sec).map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    width: "100%",
+                    padding: "10px 20px",
+                    border: "none",
+                    background: activeTab === item.id ? t.navActive : "transparent",
+                    color: activeTab === item.id ? t.text : t.subtext,
+                    borderLeft: activeTab === item.id ? `3px solid #1a9e8f` : "3px solid transparent",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    fontWeight: activeTab === item.id ? 600 : 400,
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <span style={{ fontSize: 17, minWidth: 22 }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                  {item.id === "imsbot" && <span style={{ marginLeft: "auto", background: "#1a9e8f", color: "#fff", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>AI</span>}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div style={{ padding: "20px" }}>
+          <ThemeToggle isDark={isDark} toggleTheme={toggleTheme} t={t} />
+        </div>
+
+        <button
+          onClick={onLogout}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            width: "100%",
+            padding: "12px 20px",
+            marginTop: "auto",
+            border: "none",
+            background: "transparent",
+            color: "#ef4444",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🚪</span>
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflowY: "auto" }}>
+        <header style={{
+          padding: "20px 32px",
+          borderBottom: `1px solid ${t.border}`,
+          background: t.sidebar,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12,
+        }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: t.text }}>
+              {activeTab === "overview" && "Admin Dashboard"}
+              {activeTab === "students" && "Student Management"}
+              {activeTab === "faculty" && "Faculty Management"}
+              {activeTab === "departments" && "Department Management"}
+              {activeTab === "timetable" && "Timetable Management"}
+              {activeTab === "exam-seating" && "Exam Seating Arrangement"}
+              {activeTab === "feedback" && "Faculty Feedback Analytics"}
+              {activeTab === "fee-monitoring" && "Fee Payment Monitoring"}
+              {activeTab === "leave-monitoring" && "Leave & OD Requests"}
+              {activeTab === "certificates" && "Student Certificates"}
+              {activeTab === "announcements" && "Announcements"}
+              {activeTab === "reports" && "Reports & Analytics"}
+              {activeTab === "imsbot" && "IMS Bot Assistant"}
+            </h1>
+            <p style={{ fontSize: 13, color: t.subtext, margin: "4px 0 0" }}>
+              {activeTab === "overview" && "Institution-wide overview and management."}
+              {activeTab === "students" && "Manage student records, attendance, and performance. Click 'View' for detailed profile."}
+              {activeTab === "faculty" && "Manage faculty information and assignments. Click 'View' for detailed profile."}
+              {activeTab === "departments" && "View and manage all academic departments."}
+              {activeTab === "timetable" && "Schedule classes with automatic conflict detection for faculty, rooms, and class groups."}
+              {activeTab === "exam-seating" && "Live seating arrangement - available 20 minutes before exam time."}
+              {activeTab === "feedback" && "Analyze faculty feedback and student ratings."}
+              {activeTab === "fee-monitoring" && "Track student fee payments by department and section."}
+              {activeTab === "leave-monitoring" && "Monitor and manage leave and OD requests."}
+              {activeTab === "certificates" && "Verify and manage student certificates."}
+              {activeTab === "announcements" && "Create and manage institution-wide notices."}
+              {activeTab === "reports" && "View analytics and generate reports."}
+              {activeTab === "imsbot" && "AI-powered assistant for instant information."}
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{
+              background: t.input,
+              border: `1px solid ${t.border}`,
+              borderRadius: 8,
+              padding: "6px 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}>
+              <span>🔍</span>
+              <input 
+                placeholder="Search..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ background: "none", border: "none", outline: "none", color: t.text, fontSize: 13, width: 160 }} 
+              />
+            </div>
+            <div style={{ fontSize: 20, cursor: "pointer" }}>🔔</div>
+          </div>
+        </header>
+
+        <div style={{ padding: 28, flex: 1, overflowY: "auto" }}>
+          {/* Dashboard Overview */}
+          {activeTab === "overview" && (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20, marginBottom: 28 }}>
+                {stats.map((stat, i) => (
+                  <StatCard key={i} {...stat} />
+                ))}
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
+                <div style={{
+                  background: t.panelBg,
+                  borderRadius: 20,
+                  border: `1px solid ${t.border}`,
+                  padding: "20px 20px 16px",
+                }}>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Monthly Attendance Trend</div>
+                    <div style={{ fontSize: 12, color: t.subtext }}>Institution-wide 2024</div>
+                  </div>
+                  <AttendanceTrendChart
+                    months={monthlyAttendance.months}
+                    data={monthlyAttendance.avgAttendance}
+                    t={t}
+                  />
+                </div>
+
+                <div style={{
+                  background: t.panelBg,
+                  borderRadius: 20,
+                  border: `1px solid ${t.border}`,
+                  padding: "20px",
+                }}>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Department Overview</div>
+                    <div style={{ fontSize: 12, color: t.subtext }}>Current academic year</div>
+                  </div>
+                  <div>
+                    {departmentData.map((dept, idx) => (
+                      <DepartmentRow key={idx} {...dept} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                background: t.panelBg,
+                borderRadius: 20,
+                border: `1px solid ${t.border}`,
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  padding: "18px 24px",
+                  borderBottom: `1px solid ${t.border}`,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Recent Announcements</div>
+                    <div style={{ fontSize: 12, color: t.subtext }}>Latest updates and notices</div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("announcements")}
+                    style={{
+                      background: "linear-gradient(135deg,#1a9e8f,#17b897)",
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "8px 16px",
+                      color: "#fff",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    View All
+                  </button>
+                </div>
+                <div>
+                  {localAnnouncements.slice(0, 3).map(ann => (
+                    <div key={ann.id} style={{ padding: "16px 24px", borderBottom: `1px solid ${t.border}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                        <span style={{
+                          background: `${ann.tagColor}22`,
+                          color: ann.tagColor,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: "2px 10px",
+                          borderRadius: 12,
+                        }}>{ann.tag}</span>
+                        <span style={{ fontSize: 12, color: t.subtext }}>{ann.date}</span>
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: t.text, marginBottom: 4 }}>{ann.title}</div>
+                      <div style={{ fontSize: 13, color: t.subtext }}>{ann.content}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Students Management */}
+          {activeTab === "students" && (
+            <div style={{
+              background: t.panelBg,
+              borderRadius: 20,
+              border: `1px solid ${t.border}`,
+              overflow: "hidden",
+            }}>
+              <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Student Records</div>
+                  <div style={{ fontSize: 12, color: t.subtext }}>Total: {studentsData.length} students</div>
+                </div>
+                <button style={{
+                  background: "linear-gradient(135deg,#1a9e8f,#17b897)",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 20px",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}>+ Add Student</button>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: t.tableHead }}>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Name</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Roll No</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Department</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Section</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Year</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Attendance</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>CGPA</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Fee Status</th>
+                      <th style={{ padding: "14px 16px", textAlign: "center", fontSize: 12, color: t.subtext }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStudents.map((student, idx) => (
+                      <tr key={student.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                        <td style={{ padding: "14px 16px", fontWeight: 600, color: t.text }}>{student.name}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{student.rollNo}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{student.department}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{student.section}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{student.year}</td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <span style={{ color: student.attendance >= 75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>{student.attendance}%</span>
+                        </td>
+                        <td style={{ padding: "14px 16px", fontWeight: 600, color: student.cgpa >= 8 ? "#22c55e" : "#f59e0b" }}>{student.cgpa}</td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <span style={{
+                            background: student.feeStatus === "paid" ? "#22c55e22" : student.feeStatus === "pending" ? "#f59e0b22" : "#ef444422",
+                            color: student.feeStatus === "paid" ? "#22c55e" : student.feeStatus === "pending" ? "#f59e0b" : "#ef4444",
+                            padding: "4px 8px",
+                            borderRadius: 12,
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}>
+                            {student.feeStatus.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                          <button 
+                            onClick={() => setSelectedStudent(student)}
+                            style={{ background: "#3b82f622", border: "none", color: "#3b82f6", padding: "4px 12px", borderRadius: 6, cursor: "pointer", marginRight: 8 }}
+                          >
+                            View
+                          </button>
+                          <button style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>Edit</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Faculty Management */}
+          {activeTab === "faculty" && (
+            <div style={{
+              background: t.panelBg,
+              borderRadius: 20,
+              border: `1px solid ${t.border}`,
+              overflow: "hidden",
+            }}>
+              <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Faculty Records</div>
+                  <div style={{ fontSize: 12, color: t.subtext }}>Total: {facultyData.length} faculty members</div>
+                </div>
+                <button style={{
+                  background: "linear-gradient(135deg,#1a9e8f,#17b897)",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 20px",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}>+ Add Faculty</button>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: t.tableHead }}>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Name</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Department</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Designation</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Qualification</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Experience</th>
+                      <th style={{ padding: "14px 16px", textAlign: "center", fontSize: 12, color: t.subtext }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredFaculty.map((faculty, idx) => (
+                      <tr key={faculty.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                        <td style={{ padding: "14px 16px", fontWeight: 600, color: t.text }}>{faculty.name}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{faculty.department}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{faculty.designation}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{faculty.qualification}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{faculty.experience}</td>
+                        <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                          <button 
+                            onClick={() => setSelectedFaculty(faculty)}
+                            style={{ background: "#3b82f622", border: "none", color: "#3b82f6", padding: "4px 12px", borderRadius: 6, cursor: "pointer", marginRight: 8 }}
+                          >
+                            View
+                          </button>
+                          <button style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>Edit</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Departments Management */}
+          {activeTab === "departments" && (
+            <div style={{
+              background: t.panelBg,
+              borderRadius: 20,
+              border: `1px solid ${t.border}`,
+              overflow: "hidden",
+            }}>
+              <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}` }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Department Details</div>
+                <div style={{ fontSize: 12, color: t.subtext }}>All academic departments with performance metrics</div>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: t.tableHead }}>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Department</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Code</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Students</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Faculty</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Attendance</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>HOD</th>
+                      <th style={{ padding: "14px 16px", textAlign: "left", fontSize: 12, color: t.subtext }}>Established</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {departmentData.map((dept, idx) => (
+                      <tr key={dept.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                        <td style={{ padding: "14px 16px", fontWeight: 600, color: t.text }}>{dept.name}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{dept.code}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{dept.students}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{dept.faculty}</td>
+                        <td style={{ padding: "14px 16px" }}>
+                          <span style={{ color: dept.attendance >= 80 ? "#22c55e" : "#f59e0b", fontWeight: 600 }}>{dept.attendance}%</span>
+                        </td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{dept.hod}</td>
+                        <td style={{ padding: "14px 16px", color: t.subtext }}>{dept.established}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Timetable Management */}
+          {activeTab === "timetable" && <TimetableManagement t={t} />}
+
+          {/* Exam Seating Arrangement */}
+          {activeTab === "exam-seating" && <ExamSeatingArrangement t={t} />}
+
+          {/* Feedback Statistics */}
+          {activeTab === "feedback" && <FeedbackStatistics t={t} />}
+
+          {/* Fee Monitoring */}
+          {activeTab === "fee-monitoring" && <FeeMonitoring t={t} />}
+
+          {/* Leave/OD Monitoring */}
+          {activeTab === "leave-monitoring" && <LeaveODMonitoring t={t} />}
+
+          {/* Certificates Monitoring */}
+          {activeTab === "certificates" && <CertificatesMonitoring t={t} />}
+
+          {/* Announcements Management */}
+          {activeTab === "announcements" && (
+            <div>
+              <div style={{
+                background: t.panelBg,
+                borderRadius: 20,
+                border: `1px solid ${t.border}`,
+                overflow: "hidden",
+                marginBottom: 24,
+              }}>
+                <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}` }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>All Announcements</div>
+                  <div style={{ fontSize: 12, color: t.subtext }}>Manage institution-wide notices</div>
+                </div>
+                <div>
+                  {localAnnouncements.length === 0 ? (
+                    <div style={{ padding: "60px", textAlign: "center", color: t.subtext }}>No announcements to display</div>
+                  ) : (
+                    localAnnouncements.map(ann => (
+                      <div key={ann.id} style={{ borderBottom: `1px solid ${t.border}`, padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                            <span style={{
+                              background: `${ann.tagColor}22`,
+                              color: ann.tagColor,
+                              fontSize: 10,
+                              fontWeight: 700,
+                              padding: "2px 12px",
+                              borderRadius: 20,
+                            }}>{ann.tag}</span>
+                            <span style={{ fontSize: 12, color: t.subtext }}>{ann.date}</span>
+                          </div>
+                          <div style={{ fontSize: 16, fontWeight: 600, color: t.text, marginBottom: 6 }}>{ann.title}</div>
+                          <div style={{ fontSize: 13, color: t.subtext, lineHeight: 1.5 }}>{ann.content}</div>
+                        </div>
+                        <button
+                          onClick={() => setLocalAnnouncements(prev => prev.filter(a => a.id !== ann.id))}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            fontSize: 14,
+                            padding: "4px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div id="add-announcement-form" style={{
+                background: t.panelBg,
+                borderRadius: 20,
+                border: `1px solid ${t.border}`,
+                padding: "24px",
+              }}>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: t.text }}>➕ Add New Announcement</div>
+                <div style={{ display: "grid", gap: 16 }}>
+                  <input
+                    type="text"
+                    placeholder="Announcement Title"
+                    value={newAnnouncement.title}
+                    onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: `1px solid ${t.border}`,
+                      background: t.input,
+                      color: t.text,
+                      fontSize: 14,
+                      outline: "none",
+                    }}
+                  />
+                  <textarea
+                    placeholder="Announcement Content"
+                    rows={3}
+                    value={newAnnouncement.content}
+                    onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                    style={{
+                      padding: "12px 16px",
+                      borderRadius: 10,
+                      border: `1px solid ${t.border}`,
+                      background: t.input,
+                      color: t.text,
+                      fontSize: 14,
+                      fontFamily: "inherit",
+                      resize: "vertical",
+                      outline: "none",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <select
+                      value={newAnnouncement.tag}
+                      onChange={e => setNewAnnouncement({ ...newAnnouncement, tag: e.target.value })}
+                      style={{
+                        padding: "10px 16px",
+                        borderRadius: 8,
+                        border: `1px solid ${t.border}`,
+                        background: t.input,
+                        color: t.text,
+                        fontSize: 13,
+                        outline: "none",
+                      }}
+                    >
+                      <option value="GENERAL">📌 General</option>
+                      <option value="URGENT">⚠️ Urgent</option>
+                      <option value="EVENT">🎉 Event</option>
+                      <option value="ACADEMIC">📚 Academic</option>
+                      <option value="MEETING">👥 Meeting</option>
+                      <option value="EXAM">📝 Exam</option>
+                      <option value="HOLIDAY">🌴 Holiday</option>
+                    </select>
+                    <button
+                      onClick={handleAddAnnouncement}
+                      style={{
+                        background: "linear-gradient(135deg,#1a9e8f,#17b897)",
+                        border: "none",
+                        borderRadius: 8,
+                        padding: "10px 24px",
+                        color: "#fff",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Publish Announcement
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reports & Analytics */}
+          {activeTab === "reports" && (
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20, marginBottom: 24 }}>
+                <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "24px", textAlign: "center" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#22c55e" }}>{reportsData.attendance.overall}%</div>
+                  <div style={{ fontSize: 13, color: t.subtext, marginTop: 4 }}>Overall Attendance</div>
+                  <div style={{ fontSize: 11, color: "#22c55e", marginTop: 8 }}>↑ 2% from last month</div>
+                </div>
+                <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "24px", textAlign: "center" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🎓</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#f59e0b" }}>{reportsData.performance.averageCGPA}</div>
+                  <div style={{ fontSize: 13, color: t.subtext, marginTop: 4 }}>Average CGPA</div>
+                  <div style={{ fontSize: 11, color: "#22c55e", marginTop: 8 }}>↑ 0.3 from last sem</div>
+                </div>
+                <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "24px", textAlign: "center" }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>👥</div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: "#3b82f6" }}>{adminStats.totalStudents}</div>
+                  <div style={{ fontSize: 13, color: t.subtext, marginTop: 4 }}>Total Enrollment</div>
+                  <div style={{ fontSize: 11, color: "#22c55e", marginTop: 8 }}>↑ 32 this month</div>
+                </div>
+              </div>
+
+              <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "24px", marginBottom: 24 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: t.text }}>Department-wise Attendance</div>
+                {reportsData.attendance.byDepartment.map((dept, idx) => (
+                  <div key={idx} style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, color: t.text }}>{dept.dept}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: dept.percentage >= 80 ? "#22c55e" : "#f59e0b" }}>{dept.percentage}% {dept.trend}</span>
+                    </div>
+                    <div style={{ background: t.border, borderRadius: 8, height: 8, overflow: "hidden" }}>
+                      <div style={{ width: `${dept.percentage}%`, height: "100%", background: dept.percentage >= 80 ? "#22c55e" : "#f59e0b", borderRadius: 8 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "24px" }}>
+                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: t.text }}>Top Performing Students</div>
+                {reportsData.performance.topPerformers.map((student, idx) => (
+                  <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: idx < reportsData.performance.topPerformers.length - 1 ? `1px solid ${t.border}` : "none" }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>{student.name}</div>
+                      <div style={{ fontSize: 12, color: t.subtext }}>{student.dept}</div>
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "#f59e0b" }}>{student.cgpa}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* IMS Bot */}
+          {activeTab === "imsbot" && (
+            <IMSBot t={t} />
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
+      {selectedStudent && (
+        <StudentProfileModal student={selectedStudent} onClose={() => setSelectedStudent(null)} t={t} />
+      )}
+      {selectedFaculty && (
+        <FacultyProfileModal faculty={selectedFaculty} onClose={() => setSelectedFaculty(null)} t={t} />
+      )}
+    </div>
+  );
+}
+
+export default AdminDashboard;  
