@@ -3,6 +3,7 @@ package com.rit.ims.service;
 import com.rit.ims.dto.AttendanceMarkRequest;
 import com.rit.ims.dto.AttendanceSessionRequest;
 import com.rit.ims.dto.AttendanceSummaryResponse;
+import com.rit.ims.dto.AdminAttendanceStatsResponse;
 import com.rit.ims.entity.*;
 import com.rit.ims.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -192,5 +195,60 @@ public class AttendanceService {
                 .percentage(percentage)
                 .classesNeeded(classesNeeded)
                 .build();
+    }
+
+    public AdminAttendanceStatsResponse getAdminStats() {
+        List<Student> allStudents = studentRepository.findAll();
+        List<AdminAttendanceStatsResponse.StudentStat> studentStats = new ArrayList<>();
+        Map<String, double[]> deptTotals = new HashMap<>(); // dept -> [sumPct, count]
+
+        double globalPctSum = 0;
+        int globalStudentCount = 0;
+
+        for (Student student : allStudents) {
+            List<AttendanceSummaryResponse> summaries = getStudentAttendanceSummary(student.getId());
+            double studentPctSum = 0;
+            int subjectsCount = 0;
+            
+            for (AttendanceSummaryResponse s : summaries) {
+                if (s.getTotalClasses() > 0) {
+                    studentPctSum += s.getPercentage();
+                    subjectsCount++;
+                }
+            }
+            
+            double studentOverall = subjectsCount == 0 ? 100.0 : studentPctSum / subjectsCount;
+            String status = studentOverall >= 85 ? "GOOD" : studentOverall >= 75 ? "OKAY" : "LOW";
+            
+            studentStats.add(AdminAttendanceStatsResponse.StudentStat.builder()
+                .studentId(student.getRollNumber() != null ? student.getRollNumber() : student.getUser().getUsername())
+                .id(student.getId())
+                .name(student.getUser().getFullName() != null && !student.getUser().getFullName().isEmpty() ? student.getUser().getFullName() : student.getUser().getUsername())
+                .department(student.getDepartment())
+                .percentage(studentOverall)
+                .status(status)
+                .build());
+
+            globalPctSum += studentOverall;
+            globalStudentCount++;
+
+            String dept = student.getDepartment() != null ? student.getDepartment() : "General";
+            deptTotals.putIfAbsent(dept, new double[2]);
+            deptTotals.get(dept)[0] += studentOverall;
+            deptTotals.get(dept)[1]++;
+        }
+
+        Map<String, Double> deptStats = new HashMap<>();
+        for (Map.Entry<String, double[]> entry : deptTotals.entrySet()) {
+            deptStats.put(entry.getKey(), entry.getValue()[0] / entry.getValue()[1]);
+        }
+
+        double overall = globalStudentCount == 0 ? 100.0 : globalPctSum / globalStudentCount;
+
+        return AdminAttendanceStatsResponse.builder()
+            .overallPercentage(overall)
+            .departmentStats(deptStats)
+            .studentStats(studentStats)
+            .build();
     }
 }

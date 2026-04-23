@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ThemeToggle } from "./App";
+import { api } from "./api";
 
 // ─── Exam Seating Allotment System Data & Logic ────────────────────────────────────────
 
@@ -528,18 +529,7 @@ const departmentData = [
   { id: 4, name: "Civil Engg.", attendance: 88, students: 180, faculty: 12, hod: "Dr. Anita Desai", code: "CE", established: "2005" },
 ];
 
-const studentsData = [
-  { id: 1, name: "Arjun Ravi", rollNo: "21CSE001", department: "Computer Science", year: "3rd", section: "A", attendance: 88, cgpa: 8.4, email: "arjun@college.edu", phone: "9876543210", feeStatus: "paid", pendingAmount: 0, address: "123 Main St, Bangalore", parentContact: "9876543200", dob: "2003-05-15" },
-  { id: 2, name: "Priya Nair", rollNo: "21CSE002", department: "Computer Science", year: "3rd", section: "A", attendance: 72, cgpa: 7.9, email: "priya@college.edu", phone: "9876543211", feeStatus: "pending", pendingAmount: 25000, address: "456 Oak Ave, Mumbai", parentContact: "9876543201", dob: "2003-08-22" },
-  { id: 3, name: "Kiran Raj", rollNo: "21CSE003", department: "Computer Science", year: "3rd", section: "B", attendance: 91, cgpa: 9.1, email: "kiran@college.edu", phone: "9876543212", feeStatus: "paid", pendingAmount: 0, address: "789 Pine Rd, Delhi", parentContact: "9876543202", dob: "2003-02-10" },
-  { id: 4, name: "Anjali M.", rollNo: "21ECE001", department: "Electronics", year: "3rd", section: "A", attendance: 63, cgpa: 6.8, email: "anjali@college.edu", phone: "9876543213", feeStatus: "overdue", pendingAmount: 48000, address: "321 Elm St, Chennai", parentContact: "9876543203", dob: "2003-11-30" },
-  { id: 5, name: "Ravi Kumar", rollNo: "21ECE002", department: "Electronics", year: "3rd", section: "B", attendance: 85, cgpa: 8.0, email: "ravi@college.edu", phone: "9876543214", feeStatus: "paid", pendingAmount: 0, address: "654 Maple Dr, Hyderabad", parentContact: "9876543204", dob: "2003-07-18" },
-  { id: 6, name: "Meena S.", rollNo: "21ME001", department: "Mechanical", year: "3rd", section: "A", attendance: 76, cgpa: 7.2, email: "meena@college.edu", phone: "9876543215", feeStatus: "pending", pendingAmount: 15000, address: "987 Birch Ln, Pune", parentContact: "9876543205", dob: "2003-09-12" },
-  { id: 7, name: "Rohit P.", rollNo: "21ME002", department: "Mechanical", year: "3rd", section: "B", attendance: 82, cgpa: 7.8, email: "rohit@college.edu", phone: "9876543216", feeStatus: "paid", pendingAmount: 0, address: "147 Cedar Ct, Kolkata", parentContact: "9876543206", dob: "2003-03-25" },
-  { id: 8, name: "Sneha K.", rollNo: "21CE001", department: "Civil Engg.", year: "3rd", section: "A", attendance: 90, cgpa: 8.9, email: "sneha@college.edu", phone: "9876543217", feeStatus: "paid", pendingAmount: 0, address: "258 Walnut St, Ahmedabad", parentContact: "9876543207", dob: "2003-12-03" },
-  { id: 9, name: "Vikram Singh", rollNo: "21CSE004", department: "Computer Science", year: "2nd", section: "A", attendance: 78, cgpa: 7.5, email: "vikram@college.edu", phone: "9876543218", feeStatus: "pending", pendingAmount: 35000, address: "369 Spruce Ave, Jaipur", parentContact: "9876543208", dob: "2004-01-19" },
-  { id: 10, name: "Neha Gupta", rollNo: "21ECE003", department: "Electronics", year: "2nd", section: "A", attendance: 92, cgpa: 8.7, email: "neha@college.edu", phone: "9876543219", feeStatus: "paid", pendingAmount: 0, address: "741 Ashok Nagar, Lucknow", parentContact: "9876543209", dob: "2004-06-28" },
-];
+const studentsData = [];
 
 const facultyData = [
   { id: 1, name: "Dr. Rajesh Kumar", department: "Computer Science", designation: "Professor & HOD", qualification: "Ph.D., IIT Bombay", experience: "15 years", email: "rajesh@college.edu", phone: "9988776655", specialization: "AI & ML" },
@@ -1178,14 +1168,30 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
     setNewAnnouncement({ title: "", content: "", tag: "GENERAL" });
   };
 
+  const [liveAdminStats, setLiveAdminStats] = useState({
+    overallPercentage: 0,
+    departmentStats: {},
+    studentStats: []
+  });
+
+  useEffect(() => {
+    api.getAdminAttendanceStats()
+      .then(res => setLiveAdminStats(res))
+      .catch(err => console.error("Admin stats fetch failed", err));
+  }, []);
+
   const stats = [
-    { icon: "👥", value: adminStats.totalStudents.toLocaleString(), label: "TOTAL STUDENTS", subtext: adminStats.studentsChange, color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#101e2e)" },
-    { icon: "🏫", value: adminStats.totalFaculty, label: "TOTAL FACULTY", subtext: adminStats.facultySubtext, color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#101e2e)" },
-    { icon: "📊", value: `${adminStats.avgAttendance}%`, label: "AVG ATTENDANCE", subtext: adminStats.attendanceChange, color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#101e2e)" },
-    { icon: "🏛️", value: adminStats.totalDepts, label: "DEPARTMENTS", subtext: adminStats.deptSubtext, color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#101e2e)" },
+    { icon: "👥", value: liveAdminStats.studentStats.length.toLocaleString(), label: "TOTAL STUDENTS", subtext: "MySQL Database", color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#101e2e)" },
+    { icon: "🏫", value: "—", label: "TOTAL FACULTY", subtext: "MySQL Database", color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#101e2e)" },
+    { icon: "📊", value: `${Math.round(liveAdminStats.overallPercentage)}%`, label: "AVG ATTENDANCE", subtext: "MySQL Database", color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#101e2e)" },
+    { icon: "🏛️", value: Object.keys(liveAdminStats.departmentStats).length, label: "DEPARTMENTS", subtext: "MySQL Database", color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#101e2e)" },
   ];
 
-  const filteredStudents = studentsData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) || s.department.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredStudents = liveAdminStats.studentStats.filter(s => 
+    (s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (s.studentId && s.studentId.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (s.department && s.department.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
   const filteredFaculty = facultyData.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()) || f.department.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const navItems = [
@@ -1306,7 +1312,9 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
                 </div>
                 <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, padding: "20px" }}>
                   <div style={{ marginBottom: 16 }}><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Department Overview</div><div style={{ fontSize: 12, color: t.subtext }}>Current academic year</div></div>
-                  {departmentData.map((dept, idx) => <DepartmentRow key={idx} {...dept} />)}
+                  {Object.entries(liveAdminStats.departmentStats).map(([dept, pct], idx) => (
+                    <DepartmentRow key={idx} name={dept} attendance={Math.round(pct)} students={liveAdminStats.studentStats.filter(s => s.department === dept).length} color={pct >= 85 ? "#22c55e" : pct >= 75 ? "#f59e0b" : "#ef4444"} />
+                  ))}
                 </div>
               </div>
               <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, overflow: "hidden" }}>
@@ -1337,7 +1345,7 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
               </div>
               <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, overflow: "hidden" }}>
                 <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Student Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {studentsData.length} students</div></div>
+                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Student Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {liveAdminStats.studentStats.length} students</div></div>
                   <button style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Student</button>
                 </div>
                 <div style={{ overflowX: "auto" }}>
@@ -1349,15 +1357,15 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
                     </thead>
                     <tbody>
                       {filteredStudents.map((student, idx) => (
-                        <tr key={student.id} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
+                        <tr key={student.id || idx} style={{ borderBottom: `1px solid ${t.border}`, background: idx % 2 === 0 ? "transparent" : t.rowBg }}>
                           <td style={{ padding: "14px 16px", fontWeight: 600, color: t.text }}>{student.name}</td>
-                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.rollNo}</td>
-                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.department}</td>
-                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.section}</td>
-                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.year}</td>
-                          <td style={{ padding: "14px 16px" }}><span style={{ color: student.attendance >= 75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>{student.attendance}%</span></td>
-                          <td style={{ padding: "14px 16px", fontWeight: 600, color: student.cgpa >= 8 ? "#22c55e" : "#f59e0b" }}>{student.cgpa}</td>
-                          <td style={{ padding: "14px 16px" }}><span style={{ background: student.feeStatus === "paid" ? "#22c55e22" : student.feeStatus === "pending" ? "#f59e0b22" : "#ef444422", color: student.feeStatus === "paid" ? "#22c55e" : student.feeStatus === "pending" ? "#f59e0b" : "#ef4444", padding: "4px 8px", borderRadius: 12, fontSize: 11, fontWeight: 700 }}>{student.feeStatus.toUpperCase()}</span></td>
+                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.studentId}</td>
+                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.department || "General"}</td>
+                          <td style={{ padding: "14px 16px", color: t.subtext }}>—</td>
+                          <td style={{ padding: "14px 16px", color: t.subtext }}>—</td>
+                          <td style={{ padding: "14px 16px" }}><span style={{ color: student.percentage >= 75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>{Math.round(student.percentage)}%</span></td>
+                          <td style={{ padding: "14px 16px", fontWeight: 600, color: "#22c55e" }}>—</td>
+                          <td style={{ padding: "14px 16px" }}>—</td>
                           <td style={{ padding: "14px 16px", textAlign: "center" }}>
                             <button onClick={() => setSelectedStudent(student)} style={{ background: "#3b82f622", border: "none", color: "#3b82f6", padding: "4px 12px", borderRadius: 6, cursor: "pointer", marginRight: 8 }}>View</button>
                             <button style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>Edit</button>

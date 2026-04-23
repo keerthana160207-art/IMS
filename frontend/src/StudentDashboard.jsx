@@ -1640,7 +1640,42 @@ function StudentDashboard({ onLogout }) {
           }));
           setSubjectAttendance(subjAtt);
         }
-      }).catch(err => console.error("Attendance err", err));
+      }).catch(err => {
+         console.error("Attendance err (Backend missing) - Falling back to mock data", err);
+         let mockAttSubjs = JSON.parse(JSON.stringify(defaultAttendanceSubjects));
+         try {
+           const logs = JSON.parse(localStorage.getItem('ims_mock_attendance')) || [];
+           const myId = user.username || user.employeeIdOrRollNumber || user.id || "21CSE042";
+           // Fallback demo matching: If the user is default, maybe they're 21CSE001 in faculty roster
+           const searchId = myId === "21CSE042" ? "21CSE001" : myId;
+           const myLogs = logs.filter(r => String(r.studentId) === String(searchId));
+           
+           if (myLogs.length > 0) {
+             mockAttSubjs = mockAttSubjs.map(sub => {
+                const subLogs = myLogs.filter(r => r.subject === sub.name);
+                if (subLogs.length > 0) {
+                   const extraTotal = subLogs.length;
+                   const extraPresent = subLogs.filter(r => r.status === "present").length;
+                   sub.total += extraTotal;
+                   sub.present += extraPresent;
+                   sub.pct = Math.round((sub.present / sub.total) * 100);
+                }
+                return sub;
+             });
+           }
+         } catch(e) {}
+         
+         setAttendanceSubjects(mockAttSubjs);
+         const overallPct = mockAttSubjs.length > 0 ? Math.round(mockAttSubjs.reduce((acc, curr) => acc + curr.pct, 0) / mockAttSubjs.length) : 100;
+         setStudent(prev => ({ ...prev, attendance: overallPct }));
+         
+         const subjAtt = mockAttSubjs.map(a => ({
+           name: a.name.length > 15 ? a.name.substring(0,12) + "..." : a.name,
+           pct: a.pct,
+           color: a.pct >= 85 ? "#1a9e8f" : a.pct >= 75 ? "#f0a500" : "#ef4444"
+         }));
+         setSubjectAttendance(subjAtt);
+      });
 
       // 2. Fetch Timetable
       if (user.dept && user.year && user.section) {

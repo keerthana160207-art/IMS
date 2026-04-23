@@ -71,6 +71,8 @@ export const api = {
   getSessionRecords: (sessionId) => authFetch(`/attendance/session/${sessionId}/records`),
   getActiveSessions: () => authFetch('/attendance/session/active'),
 
+  getAdminAttendanceStats: () => authFetch('/admin/attendance/stats'),
+
   // Users Management
   getAllStudents: () => authFetch('/users/students'),
   getAllFaculty: () => authFetch('/users/faculty'),

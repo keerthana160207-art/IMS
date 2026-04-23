@@ -37,13 +37,7 @@ const attendanceStats = [
   { subject: "Algorithms",      sections: "Sections: CSE C",     pct: 79, color: "#f0a500" },
 ];
 
-const studentOverview = [
-  { name: "Arjun Ravi", id: "21CSE001", attend: 88, cgpa: 8.4, status: "OK",   section: "CSE-A" },
-  { name: "Priya Nair", id: "21CSE002", attend: 72, cgpa: 7.9, status: "WARN", section: "CSE-B" },
-  { name: "Kiran Raj",  id: "21CSE003", attend: 91, cgpa: 9.1, status: "OK",   section: "CSE-A" },
-  { name: "Anjali M.",  id: "21CSE004", attend: 63, cgpa: 6.8, status: "RISK", section: "CSE-C" },
-  { name: "Ravi Kumar", id: "21CSE005", attend: 85, cgpa: 8.0, status: "OK",   section: "CSE-B" },
-];
+const studentOverview = [];
 
 const announcements = [
   { id: 1, tag: "URGENT", tagColor: "#ef4444", tagBg: "#ef444422", border: "#ef4444", title: "Mid-Semester Examinations", body: "Mid-semester exams from April 15–22. Check hall ticket on portal.", date: "Apr 8", author: "Exam Cell", pinned: true },
@@ -1496,7 +1490,13 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
   }, []);
 
   // Shared attendance log — passed to both AttendancePage and AttendanceRecordsPage
-  const [attendanceLog, setAttendanceLog] = useState([]);
+  const [attendanceLog, setAttendanceLog] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ims_mock_attendance')) || []; } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ims_mock_attendance', JSON.stringify(attendanceLog));
+  }, [attendanceLog]);
 
   const sections = ["MAIN", "TEACHING", "STUDENTS", "TOOLS"];
 
