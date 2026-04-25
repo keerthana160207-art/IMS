@@ -151,17 +151,15 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const isLocked  = !!currentSession?.locked;
   
   const roster = allStudents.length > 0 
-    ? allStudents.filter(stu => stu.department === section.split('-')[0] && stu.section === section.split('-')[1] || true) // Simplified for demo if department doesn't match perfectly
-        .filter(stu => stu.username) // Ensuring we work with students correctly
-        .map(stu => ({ name: stu.name, id: stu.username }))
+    ? allStudents.filter(stu => (stu.department === section.split('-')[0] && stu.section === section.split('-')[1]) || true) 
+        .filter(stu => stu.user && stu.user.username) 
+        .map(stu => ({ name: stu.user.fullName || stu.user.username || "Unknown", id: stu.user.username || "Unknown", dbId: stu.id }))
     : (rosterData[section] || []);
 
-  // Use a softer filter if the array turns out empty
-  const activeRoster = (allStudents.length > 0 && allStudents.some(stu => stu.username)) 
-    ? allStudents.map(stu => ({ name: stu.name, id: stu.username })) // Fallback to all students if section mapping is tricky
+  const activeRoster = (allStudents.length > 0 && allStudents.some(stu => stu.user && stu.user.username)) 
+    ? allStudents.map(stu => ({ name: stu.user?.fullName || stu.user?.username || "Unknown", id: stu.user?.username || "Unknown", dbId: stu.id })) 
     : (rosterData[section] || []);
   
-  // Actually, we should map section properly, let's keep rosterData as fallback but attempt active mapping
   const finalRoster = roster.length > 0 ? roster : activeRoster;
 
   // Tick the active session(s) down every second
@@ -238,10 +236,13 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
     // API Call
     if (currentSession.serverSessionId) {
       try {
-        const records = Object.keys(roll).map(sid => ({
-          studentId: sid,
-          status: roll[sid] === "present" ? "PRESENT" : "ABSENT"
-        }));
+        const records = Object.keys(roll).map(sid => {
+          const studentInfo = finalRoster.find(s => s.id === sid);
+          return {
+            studentId: studentInfo ? (studentInfo.dbId || sid) : sid,
+            status: roll[sid] === "present" ? "PRESENT" : "ABSENT"
+          };
+        });
         await api.markAttendance(currentSession.serverSessionId, records);
         await api.closeAttendanceSession(currentSession.serverSessionId);
       } catch(e) {
@@ -276,8 +277,8 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const totalCnt   = finalRoster.length;
 
   const filteredRoster = finalRoster.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.id.toLowerCase().includes(search.toLowerCase())
+    (s.name || "").toLowerCase().includes((search || "").toLowerCase()) ||
+    (s.id || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
   // Historical attendance for records tab

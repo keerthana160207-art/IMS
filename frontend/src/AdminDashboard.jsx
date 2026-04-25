@@ -50,7 +50,7 @@ const generateImsStudents = () => {
   return students;
 };
 
-const IMS_ALL_STUDENTS = generateImsStudents();
+const IMS_ALL_STUDENTS = [];
 
 const generateImsSeatHistory = (students) => {
   const history = {};
@@ -65,7 +65,7 @@ const generateImsSeatHistory = (students) => {
   return history;
 };
 
-const IMS_SEAT_HISTORY = generateImsSeatHistory(IMS_ALL_STUDENTS);
+const IMS_SEAT_HISTORY = {};
 
 const allocateSeating = (students) => {
   if (!students.length) return [];
@@ -191,7 +191,7 @@ const exportSeatingToCSV = (assignments) => {
 
 // ─── Exam Seating Allotment Sub-Components ─────────────────────────────────────────────
 
-function ExamSeatingNavbar({ totalStudents, allocatedCount, onExportSeating, assignments }) {
+function ExamSeatingNavbar({ totalStudents, allocatedCount, onExportSeating, onPublishSeating, assignments }) {
   return (
     <div style={{ background: "#0f172a", borderBottom: "1px solid #1e293b", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: "12px 12px 0 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -206,9 +206,14 @@ function ExamSeatingNavbar({ totalStudents, allocatedCount, onExportSeating, ass
           </div>
         ))}
         {assignments && assignments.length > 0 && (
-          <button onClick={onExportSeating} style={{ background: "#22c55e", border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-            📊 Export Seating
-          </button>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={onExportSeating} style={{ background: "#22c55e", border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+              📊 Export Seating
+            </button>
+            <button onClick={onPublishSeating} style={{ background: "#3b82f6", border: "none", borderRadius: 6, padding: "6px 12px", color: "#fff", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+              ☁️ Publish to Portal
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -226,7 +231,7 @@ function ExamSeatingCountdown({ examDateTime, onUnlock }) {
     const tick = () => {
       const diff = new Date(examDateTime).getTime() - Date.now();
       setRemaining(diff);
-      const unlocked = diff <= 20 * 60 * 1000;
+      const unlocked = diff <= 30 * 60 * 1000;
       setIsUnlocked(unlocked);
       if (unlocked && !prevRef.current) { onUnlock?.(); prevRef.current = true; }
       if (!unlocked) prevRef.current = false;
@@ -253,7 +258,7 @@ function ExamSeatingCountdown({ examDateTime, onUnlock }) {
         </div>
       </div>
       <div style={{ marginLeft: "auto", textAlign: "right" }}>
-        <div style={{ fontSize: 11, color: "#64748b" }}>Seating unlocks 20 min before exam</div>
+        <div style={{ fontSize: 11, color: "#64748b" }}>Seating unlocks 30 min before exam</div>
         <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{new Date(examDateTime).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</div>
       </div>
       <style>{`@keyframes imsPulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
@@ -391,7 +396,7 @@ function ExamSeatingRoomCard({ assignment, isVisible, searchTerm }) {
       </div>
       <div style={{ padding: "6px 16px 16px", overflowX: "auto" }}>
         {!isVisible ? (
-          <div style={{ textAlign: "center", padding: "32px 0", color: "#475569", fontSize: 13 }}>🔒 Seating visible 20 minutes before exam</div>
+          <div style={{ textAlign: "center", padding: "32px 0", color: "#475569", fontSize: 13 }}>🔒 Seating visible 30 minutes before exam</div>
         ) : (
           rows.map((rowSeats, ri) => (
             <div key={ri} style={{ display: "flex", gap: 6, marginBottom: 6, justifyContent: "center" }}>
@@ -421,7 +426,7 @@ function ExamSeatingRoomCard({ assignment, isVisible, searchTerm }) {
 
 // ─── Main Exam Seating Allotment Component ─────────────────────────────────────────
 
-function ExamSeatingAllotment() {
+function ExamSeatingAllotment({ students }) {
   const [loading, setLoading] = useState(false);
   const [assignments, setAssignments] = useState(null);
   const [examConfig, setExamConfig] = useState(null);
@@ -435,13 +440,24 @@ function ExamSeatingAllotment() {
   const handleGenerate = ({ departments, examDateTime }) => {
     setLoading(true); setError(null); setAssignments(null); setSeatingVisible(false);
     setTimeout(() => {
-      const filtered = IMS_ALL_STUDENTS.filter((s) => departments.includes(s.department));
+      // Map backend student format to what the allocateSeating function expects
+      const formattedStudents = students.map(s => {
+        const d = s.department || "Unknown";
+        const longDept = Object.keys(IMS_DEPT_SHORT).find(k => IMS_DEPT_SHORT[k] === d) || d;
+        return {
+          id: s.id,
+          name: s.name || s.user?.fullName || "Unknown",
+          department: longDept,
+          registerNumber: s.studentId || s.rollNumber || "N/A"
+        };
+      });
+      const filtered = formattedStudents.filter((s) => departments.includes(s.department));
       if (!filtered.length) { setError("No students found for selected departments."); setLoading(false); return; }
       try {
         const result = allocateSeating(filtered);
         setAssignments(result);
         setExamConfig({ departments, examDateTime });
-        if (new Date(examDateTime).getTime() - Date.now() <= 20 * 60 * 1000) setSeatingVisible(true);
+        if (new Date(examDateTime).getTime() - Date.now() <= 30 * 60 * 1000) setSeatingVisible(true);
       } catch (e) { setError("Allocation failed. Please try again."); }
       setLoading(false);
     }, 1400);
@@ -449,13 +465,43 @@ function ExamSeatingAllotment() {
 
   const handleRegenerate = () => { if (examConfig) handleGenerate(examConfig); };
   const handleExportSeating = () => { if (assignments) exportSeatingToCSV(assignments); };
+  const handlePublishSeating = async () => {
+    if (!assignments || !examConfig) return;
+    try {
+      setLoading(true);
+      const flatAssignments = [];
+      assignments.forEach(room => {
+        room.seats.forEach(seat => {
+          flatAssignments.push({
+            studentId: seat.student.id,
+            room: room.room,
+            rowNum: String(seat.row),
+            colNum: String(seat.col),
+            seatLabel: String.fromCharCode(65 + seat.row) + seat.col
+          });
+        });
+      });
+      const payload = {
+        examName: "Internal Exam - " + examConfig.departments.join(", "),
+        examDateTime: examConfig.examDateTime,
+        assignments: flatAssignments
+      };
+      await api.publishSeatingPlan(payload);
+      alert("Seating Plan Published Successfully!");
+    } catch (err) {
+      setError("Failed to publish seating plan.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const visibleAssignments = assignments ? (filterRoom === "All" ? assignments : assignments.filter((a) => a.room === filterRoom)) : [];
   const allocatedCount = assignments ? assignments.reduce((s, a) => s + a.seats.length, 0) : 0;
 
   return (
     <div style={{ background: "#0f172a", borderRadius: 12, overflow: "hidden", minHeight: 500 }}>
-      <ExamSeatingNavbar totalStudents={IMS_ALL_STUDENTS.length} allocatedCount={allocatedCount} onExportSeating={handleExportSeating} assignments={assignments} />
+      <ExamSeatingNavbar totalStudents={students.length} allocatedCount={allocatedCount} onExportSeating={handleExportSeating} onPublishSeating={handlePublishSeating} assignments={assignments} />
       <div style={{ padding: 20 }}>
         <ExamSeatingFiltersPanel onGenerate={handleGenerate} loading={loading} />
         {error && <div style={{ background: "#ef444422", border: "1px solid #ef4444", borderRadius: 8, padding: "10px 16px", color: "#ef4444", marginBottom: 16, fontSize: 13 }}>⚠️ {error}</div>}
@@ -905,7 +951,7 @@ function CertificatesMonitoring({ t }) {
   );
 }
 
-function TimetableManagement({ t }) {
+function TimetableManagement({ t, facultyData = [] }) {
   const [timetable, setTimetable] = useState(initialTimetable);
   const [selectedDay, setSelectedDay] = useState("Monday");
   const [selectedDepartment, setSelectedDepartment] = useState("All");
@@ -1005,7 +1051,7 @@ function TimetableManagement({ t }) {
   );
 }
 
-function IMSBot({ t }) {
+function IMSBot({ t, studentsData = [] }) {
   const [messages, setMessages] = useState([{ role: "bot", text: "👋 Hi Admin! I'm the **IMS Bot**, your AI campus assistant.\n\nI can help with attendance, timetable, exam dates, announcements, student records, fee status, leave requests, certificates, and more. What would you like to know?", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1174,25 +1220,45 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
     studentStats: []
   });
 
+  const [localStudentsData, setLocalStudentsData] = useState([]);
+  const [localFacultyData, setLocalFacultyData] = useState([]);
+
   useEffect(() => {
     api.getAdminAttendanceStats()
       .then(res => setLiveAdminStats(res))
       .catch(err => console.error("Admin stats fetch failed", err));
+    
+    api.getAllStudents()
+       .then(res => setLocalStudentsData(res))
+       .catch(err => console.error("Students fetch failed", err));
+       
+    api.getAllFaculty()
+       .then(res => setLocalFacultyData(res))
+       .catch(err => console.error("Faculty fetch failed", err));
   }, []);
 
   const stats = [
-    { icon: "👥", value: liveAdminStats.studentStats.length.toLocaleString(), label: "TOTAL STUDENTS", subtext: "MySQL Database", color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#101e2e)" },
-    { icon: "🏫", value: "—", label: "TOTAL FACULTY", subtext: "MySQL Database", color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#101e2e)" },
+    { icon: "👥", value: localStudentsData.length.toLocaleString(), label: "TOTAL STUDENTS", subtext: "MySQL Database", color: "#3b82f6", grad: "linear-gradient(135deg,#0d2040,#101e2e)" },
+    { icon: "🏫", value: localFacultyData.length.toLocaleString(), label: "TOTAL FACULTY", subtext: "MySQL Database", color: "#a855f7", grad: "linear-gradient(135deg,#2d1a52,#101e2e)" },
     { icon: "📊", value: `${Math.round(liveAdminStats.overallPercentage)}%`, label: "AVG ATTENDANCE", subtext: "MySQL Database", color: "#22c55e", grad: "linear-gradient(135deg,#0d3d1e,#101e2e)" },
     { icon: "🏛️", value: Object.keys(liveAdminStats.departmentStats).length, label: "DEPARTMENTS", subtext: "MySQL Database", color: "#f59e0b", grad: "linear-gradient(135deg,#3d2a00,#101e2e)" },
   ];
 
-  const filteredStudents = liveAdminStats.studentStats.filter(s => 
-    (s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
-    (s.studentId && s.studentId.toLowerCase().includes(searchTerm.toLowerCase())) || 
-    (s.department && s.department.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-  const filteredFaculty = facultyData.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()) || f.department.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredStudents = localStudentsData.filter(s => {
+    const name = s.name || s.user?.fullName || "";
+    const id = s.studentId || s.rollNumber || "";
+    const dept = s.department || "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           dept.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const filteredFaculty = localFacultyData.filter(f => {
+    const name = f.name || f.user?.fullName || "";
+    const dept = f.department || "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           dept.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const navItems = [
     { id: "overview", label: "Dashboard", icon: "📊", section: "MAIN" },
@@ -1296,7 +1362,7 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
         <div style={{ padding: activeTab === "exam-seating-allotment" ? 0 : 28, flex: 1, overflowY: "auto" }}>
           {activeTab === "exam-seating-allotment" && (
             <div style={{ padding: 24 }}>
-              <ExamSeatingAllotment />
+              <ExamSeatingAllotment students={localStudentsData} />
             </div>
           )}
 
@@ -1345,7 +1411,7 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
               </div>
               <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, overflow: "hidden" }}>
                 <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Student Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {liveAdminStats.studentStats.length} students</div></div>
+                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Student Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {localStudentsData.length} students</div></div>
                   <button style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Student</button>
                 </div>
                 <div style={{ overflowX: "auto" }}>
@@ -1362,10 +1428,10 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
                           <td style={{ padding: "14px 16px", color: t.subtext }}>{student.studentId}</td>
                           <td style={{ padding: "14px 16px", color: t.subtext }}>{student.department || "General"}</td>
                           <td style={{ padding: "14px 16px", color: t.subtext }}>—</td>
-                          <td style={{ padding: "14px 16px", color: t.subtext }}>—</td>
-                          <td style={{ padding: "14px 16px" }}><span style={{ color: student.percentage >= 75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>{Math.round(student.percentage)}%</span></td>
+                          <td style={{ padding: "14px 16px", color: t.subtext }}>{student.year || "1st"}</td>
+                          <td style={{ padding: "14px 16px" }}><span style={{ color: (student.percentage || 100) >= 75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>{Math.round(student.percentage || 0)}%</span></td>
                           <td style={{ padding: "14px 16px", fontWeight: 600, color: "#22c55e" }}>—</td>
-                          <td style={{ padding: "14px 16px" }}>—</td>
+                          <td style={{ padding: "14px 16px" }}>{student.feeStatus || "—"}</td>
                           <td style={{ padding: "14px 16px", textAlign: "center" }}>
                             <button onClick={() => setSelectedStudent(student)} style={{ background: "#3b82f622", border: "none", color: "#3b82f6", padding: "4px 12px", borderRadius: 6, cursor: "pointer", marginRight: 8 }}>View</button>
                             <button style={{ background: "#ef444422", border: "none", color: "#ef4444", padding: "4px 12px", borderRadius: 6, cursor: "pointer" }}>Edit</button>
@@ -1388,7 +1454,7 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
               </div>
               <div style={{ background: t.panelBg, borderRadius: 20, border: `1px solid ${t.border}`, overflow: "hidden" }}>
                 <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Faculty Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {facultyData.length} faculty members</div></div>
+                  <div><div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Faculty Records</div><div style={{ fontSize: 12, color: t.subtext }}>Total: {localFacultyData.length} faculty members</div></div>
                   <button style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, padding: "8px 20px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ Add Faculty</button>
                 </div>
                 <div style={{ overflowX: "auto" }}>
@@ -1447,12 +1513,12 @@ function AdminDashboard({ onLogout, isDark, toggleTheme, t }) {
             </div>
           )}
 
-          {activeTab === "timetable" && <TimetableManagement t={t} />}
+          {activeTab === "timetable" && <TimetableManagement t={t} facultyData={localFacultyData} />}
           {activeTab === "feedback" && <FeedbackStatistics t={t} />}
           {activeTab === "fee-monitoring" && <FeeMonitoring t={t} />}
           {activeTab === "leave-monitoring" && <LeaveODMonitoring t={t} />}
           {activeTab === "certificates" && <CertificatesMonitoring t={t} />}
-          {activeTab === "imsbot" && <IMSBot t={t} />}
+          {activeTab === "imsbot" && <IMSBot t={t} studentsData={localStudentsData} />}
 
           {activeTab === "announcements" && (
             <div>

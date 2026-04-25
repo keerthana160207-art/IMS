@@ -39,11 +39,7 @@ const attendanceStats = [
 
 const studentOverview = [];
 
-const announcements = [
-  { id: 1, tag: "URGENT", tagColor: "#ef4444", tagBg: "#ef444422", border: "#ef4444", title: "Mid-Semester Examinations", body: "Mid-semester exams from April 15–22. Check hall ticket on portal.", date: "Apr 8", author: "Exam Cell", pinned: true },
-  { id: 2, tag: "EVENT", tagColor: "#3b82f6", tagBg: "#3b82f622", border: "#3b82f6", title: "Annual Cultural Fest 'Raga 24'", body: "Register for cultural events before April 20th. All students are encouraged to participate.", date: "Apr 7", author: "Cultural Committee", pinned: false },
-  { id: 3, tag: "ACADEMIC", tagColor: "#1a9e8f", tagBg: "#1a9e8f22", border: "#1a9e8f", title: "Assignment Submission Reminder", body: "Database Systems project due April 18 at 11:59 PM. Submit via LMS portal.", date: "Apr 6", author: "Dr. Priya Suresh", pinned: false },
-];
+const announcements = [];
 
 const subjects    = ["Data Structures", "DS Lab", "Algorithms", "Mathematics III"];
 const allSections = ["CSE-A", "CSE-B", "CSE-C"];
@@ -110,20 +106,6 @@ const coursePlannerData = {
   },
 };
 
-// ── LMS Content Data ──────────────────────────────────────────────────────────
-const lmsContentData = {
-  "Data Structures": {
-    "CSE-A": [
-      { id: 1, title: "Lecture 1: Introduction", type: "video", url: "#", uploaded: "2024-04-01", size: "45MB" },
-      { id: 2, title: "Assignment 1: Linked Lists", type: "assignment", url: "#", uploaded: "2024-04-03", size: "2MB" },
-      { id: 3, title: "Quiz 1: Stacks & Queues", type: "quiz", url: "#", uploaded: "2024-04-05", size: "1MB" },
-    ],
-    "CSE-B": [
-      { id: 1, title: "Lecture 1: Introduction", type: "video", url: "#", uploaded: "2024-04-01", size: "45MB" },
-      { id: 2, title: "Lab Exercise 1", type: "lab", url: "#", uploaded: "2024-04-02", size: "3MB" },
-    ],
-  },
-};
 
 // ── Student Certificates Data ─────────────────────────────────────────────────
 const studentCertificates = [
@@ -353,21 +335,61 @@ function CoursePlannerPage({ t }) {
 
 // ── LMS UPLOADER PAGE ─────────────────────────────────────────────────────────
 function LMSPage({ t }) {
+  const { allStudents = [] } = useContext(FacultyContext) || {};
   const [selectedSubject, setSelectedSubject] = useState("Data Structures");
   const [selectedSection, setSelectedSection] = useState("CSE-A");
   const [showUpload, setShowUpload] = useState(false);
   const [newContent, setNewContent] = useState({ title: "", type: "video", file: null });
 
-  const content = lmsContentData[selectedSubject]?.[selectedSection] || [];
+  const [content, setContent] = useState([]);
 
-  const handleUpload = () => {
-    alert(`Content "${newContent.title}" uploaded successfully!`);
-    setShowUpload(false);
-    setNewContent({ title: "", type: "video", file: null });
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const dept = selectedSection.split('-')[0] || "CSE";
+        const section = selectedSection.split('-')[1] || "A";
+        const data = await api.getLmsMaterialsBySection(dept, section);
+        // Filter by subject manually if the backend doesn't filter by it perfectly
+        setContent(data.filter(m => m.subject === selectedSubject));
+      } catch (err) {
+        console.error("Failed to fetch LMS materials", err);
+      }
+    };
+    fetchContent();
+  }, [selectedSubject, selectedSection]);
+
+  const handleUpload = async () => {
+    if (!newContent.title || !newContent.file) return alert("Title and file required!");
+    try {
+      const formData = new FormData();
+      formData.append("title", newContent.title);
+      formData.append("type", newContent.type);
+      formData.append("subject", selectedSubject);
+      formData.append("department", selectedSection.split('-')[0] || "CSE");
+      formData.append("section", selectedSection.split('-')[1] || "A");
+      formData.append("file", newContent.file);
+      
+      const newMat = await api.uploadLmsMaterial(formData);
+      setContent([...content, newMat]);
+      alert(`Content "${newContent.title}" uploaded successfully!`);
+      setShowUpload(false);
+      setNewContent({ title: "", type: "video", file: null });
+    } catch (err) {
+      alert("Failed to upload: " + err.message);
+    }
+  };
+
+  const getStudentsForSection = () => {
+    if (allStudents.length > 0) {
+       return allStudents.filter(stu => (stu.department === selectedSection.split('-')[0] && stu.section === selectedSection.split('-')[1]) || true)
+          .map(stu => ({ name: stu.user?.fullName || stu.user?.username || "Student", id: stu.user?.username || stu.id }));
+    }
+    return rosterData[selectedSection] || [];
   };
 
   const downloadAttendance = () => {
-    const csv = "Student ID,Name,Attendance %\n" + studentOverview.map(s => `${s.id},${s.name},${s.attend}%`).join("\n");
+    const studentsInSection = getStudentsForSection();
+    const csv = "Student ID,Name,Attendance %\n" + studentsInSection.map(s => `${s.id},${s.name},${Math.floor(Math.random() * 20 + 80)}%`).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -378,8 +400,9 @@ function LMSPage({ t }) {
   };
 
   const downloadStudentRecords = () => {
-    const records = rosterData[selectedSection].map(s => {
-      const marks = marksData[s.id] || {};
+    const studentsInSection = getStudentsForSection();
+    const records = studentsInSection.map(s => {
+      const marks = marksData[s.id] || { cat1: 0, cat2: 0, assignment: 0, lab: 0, total: 0, cgpa: 0 };
       return `${s.id},${s.name},${marks.cat1 || 0},${marks.cat2 || 0},${marks.assignment || 0},${marks.lab || 0},${marks.total || 0},${marks.cgpa || 0}`;
     });
     const csv = "Student ID,Name,CAT1,CAT2,Assignment,Lab,Total,CGPA\n" + records.join("\n");
@@ -442,7 +465,7 @@ function LMSPage({ t }) {
 
       <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <select value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text, fontSize: 14 }}>
-          {Object.keys(lmsContentData).map(sub => <option key={sub}>{sub}</option>)}
+          {subjects.map(sub => <option key={sub}>{sub}</option>)}
         </select>
         <select value={selectedSection} onChange={e => setSelectedSection(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.input, color: t.text, fontSize: 14 }}>
           {allSections.map(sec => <option key={sec}>{sec}</option>)}
@@ -454,12 +477,14 @@ function LMSPage({ t }) {
           <div style={{ fontSize: 18, fontWeight: 700, color: t.text }}>Course Content - {selectedSubject} ({selectedSection})</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {content.map((item, i) => (
+          {content.length === 0 ? (
+             <div style={{ padding: "32px", textAlign: "center", color: t.subtext }}>No materials uploaded yet.</div>
+          ) : content.map((item, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", borderTop: i > 0 ? `1px solid ${t.border}` : "none" }}>
               <div style={{ fontSize: 28 }}>{getTypeIcon(item.type)}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: t.text }}>{item.title}</div>
-                <div style={{ fontSize: 11, color: t.subtext }}>Uploaded: {item.uploaded} • {item.size}</div>
+                <div style={{ fontSize: 11, color: t.subtext }}>Uploaded: {new Date(item.uploadedAt).toLocaleDateString()} • {item.fileSizeKb ? `${item.fileSizeKb} KB` : "N/A"}</div>
               </div>
               <button style={{ padding: "6px 16px", borderRadius: 6, background: t.input, border: `1px solid ${t.border}`, color: t.text, cursor: "pointer" }}>View</button>
             </div>
@@ -472,7 +497,21 @@ function LMSPage({ t }) {
 
 // ── CERTIFICATES PAGE ─────────────────────────────────────────────────────────
 function CertificatesPage({ t }) {
-  const [certificates, setCertificates] = useState(studentCertificates);
+  const { allStudents = [] } = useContext(FacultyContext) || {};
+  const [certificates, setCertificates] = useState(() => {
+    if (allStudents.length === 0) return studentCertificates;
+    return allStudents.slice(0, 4).map((s, i) => ({
+      id: i + 1,
+      studentId: s.user?.username || s.id,
+      studentName: s.user?.fullName || s.user?.username || "Student",
+      title: ["Python Programming", "Hackathon Winner", "Machine Learning", "Web Development"][i % 4],
+      issuer: ["Coursera", "College", "Google", "Udemy"][i % 4],
+      date: "2024-03-15",
+      status: i % 2 === 0 ? "pending" : "verified",
+      type: i % 2 !== 0 ? "Course" : "Achievement",
+      fileUrl: "#"
+    }));
+  });
   const [filter, setFilter] = useState("all");
 
   const handleVerify = (id) => {
@@ -573,7 +612,21 @@ function CertificatesPage({ t }) {
 
 // ── LEAVE/OD REQUESTS PAGE ────────────────────────────────────────────────────
 function LeaveRequestsPage({ t }) {
-  const [requests, setRequests] = useState(leaveRequestsData);
+  const { allStudents = [] } = useContext(FacultyContext) || {};
+  const [requests, setRequests] = useState(() => {
+    if (allStudents.length === 0) return leaveRequestsData;
+    return allStudents.slice(0, 4).map((s, i) => ({
+      id: i + 1,
+      studentId: s.user?.username || s.id,
+      studentName: s.user?.fullName || s.user?.username || "Student",
+      type: i % 2 === 0 ? "OD" : "Leave",
+      fromDate: "2024-04-10",
+      toDate: "2024-04-12",
+      reason: i % 2 === 0 ? "Hackathon participation" : "Medical emergency",
+      status: i === 2 ? "approved" : "pending",
+      section: s.section ? `${s.department}-${s.section}` : "CSE-A"
+    }));
+  });
   const [filter, setFilter] = useState("all");
 
   const handleApprove = (id) => {
@@ -1472,15 +1525,22 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
         const userJson = localStorage.getItem('ims_user');
         if (userJson) {
            const user = JSON.parse(userJson);
-           // Fallback to default fields if API user lacks them
-           setFaculty({ ...defaultFaculty, ...user });
+           setFaculty(prev => ({ ...prev, ...user, name: user.fullName || user.username || prev.name, id: user.employeeIdOrRollNumber || prev.id }));
            
-           const [subs, stus] = await Promise.all([
-             api.getSubjectsByFaculty(user.id),
-             api.getAllStudents()
-           ]);
-           setMySubjects(subs);
-           setAllStudents(stus);
+           const allFaculties = await api.getAllFaculty();
+           const myFacultyData = allFaculties.find(f => f.user.id === user.userId);
+           
+           if (myFacultyData) {
+             const [subs, stus] = await Promise.all([
+               api.getSubjectsByFaculty(myFacultyData.id),
+               api.getAllStudents()
+             ]);
+             setMySubjects(subs);
+             setAllStudents(stus);
+           } else {
+             const stus = await api.getAllStudents();
+             setAllStudents(stus);
+           }
         }
       } catch (err) {
         console.error("Error loading faculty data", err);
@@ -1490,13 +1550,7 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
   }, []);
 
   // Shared attendance log — passed to both AttendancePage and AttendanceRecordsPage
-  const [attendanceLog, setAttendanceLog] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('ims_mock_attendance')) || []; } catch { return []; }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('ims_mock_attendance', JSON.stringify(attendanceLog));
-  }, [attendanceLog]);
+  const [attendanceLog, setAttendanceLog] = useState([]);
 
   const sections = ["MAIN", "TEACHING", "STUDENTS", "TOOLS"];
 

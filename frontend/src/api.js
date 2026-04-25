@@ -17,7 +17,14 @@ const authFetch = async (endpoint, options = {}) => {
   });
 
   if (!response.ok) {
-    const errorMessage = await response.text();
+    const errorText = await response.text();
+    let errorMessage = errorText;
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorJson.error || 'API call failed';
+    } catch (e) {
+      // not JSON
+    }
     throw new Error(errorMessage || 'API call failed');
   }
 
@@ -61,6 +68,18 @@ export const api = {
   getUnreadCount: (userId) => authFetch(`/notifications/${userId}/count`),
   markNotificationRead: (id) => authFetch(`/notifications/${id}/read`, { method: 'PUT' }),
 
+  // LMS
+  uploadLmsMaterial: (formData) => {
+    const token = localStorage.getItem('ims_token');
+    return fetch('http://localhost:8080/api/lms/upload', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData // DO NOT stringify or set Content-Type, browser handles boundary
+    }).then(res => res.json());
+  },
+  getLmsMaterialsForStudent: () => authFetch('/lms/student'),
+  getLmsMaterialsBySection: (dept, section) => authFetch(`/lms/faculty/section?department=${dept}&section=${section}`),
+
   // Attendance Actions
   startAttendanceSession: (subjectId, periodNumber) => 
     authFetch('/attendance/session/start', { method: 'POST', body: JSON.stringify({ subjectId, periodNumber }) }),
@@ -71,9 +90,17 @@ export const api = {
   getSessionRecords: (sessionId) => authFetch(`/attendance/session/${sessionId}/records`),
   getActiveSessions: () => authFetch('/attendance/session/active'),
 
+  // Seating Allocations
+  publishSeatingPlan: (data) => authFetch('/allocations/publish', { method: 'POST', body: JSON.stringify(data) }),
+  getMyAllocations: () => authFetch(`/student/my-allocation`), // This actually takes ?examId=...
+  getAllocationsForStudent: (studentId) => authFetch(`/allocations/student/${studentId}`),
+  
   getAdminAttendanceStats: () => authFetch('/admin/attendance/stats'),
 
   // Users Management
+  getCurrentUser: () => authFetch('/users/me'),
   getAllStudents: () => authFetch('/users/students'),
   getAllFaculty: () => authFetch('/users/faculty'),
+  getStudentById: (id) => authFetch(`/users/student/${id}`),
+  getFacultyById: (id) => authFetch(`/users/faculty/${id}`),
 };

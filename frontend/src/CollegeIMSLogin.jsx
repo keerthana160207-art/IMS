@@ -10,7 +10,7 @@ const roles = [
 const demoCredentials = {
   student: { id: "student1", pass: "password123" },
   faculty: { id: "faculty1", pass: "password123" },
-  admin: { id: "admin", pass: "password123" },
+  admin: { id: "admin1", pass: "password123" },
 };
 
 export default function LoginPage({ onLogin }) {

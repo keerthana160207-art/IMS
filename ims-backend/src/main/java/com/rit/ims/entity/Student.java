@@ -29,4 +29,13 @@ public class Student {
     private String batch;
 
     private String department;
+
+    @Column(unique = true)
+    private String email;
+
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Role role = Role.STUDENT;
 }

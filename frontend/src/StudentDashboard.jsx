@@ -15,19 +15,9 @@ const defaultStudent = {
   assignments: 3,
 };
 
-const defaultSubjectAttendance = [
-  { name: "Data Struct.", pct: 86, color: "#1a9e8f" },
-  { name: "Mathematics", pct: 90, color: "#1a9e8f" },
-  { name: "OS Concepts", pct: 76, color: "#f0a500" },
-  { name: "Database Sys.", pct: 92, color: "#1a9e8f" },
-];
+const defaultSubjectAttendance = [];
 
-const defaultTodaysClasses = [
-  { time: "09:00–10:00", subject: "Data Structures", teacher: "Dr. Ravi K.", room: "A101", now: false },
-  { time: "10:00–11:00", subject: "Mathematics III", teacher: "Dr. Priya S.", room: "A102", now: true },
-  { time: "11:15–12:15", subject: "Physics Lab", teacher: "Prof. James", room: "Lab-3", now: false },
-  { time: "14:00–15:00", subject: "OS Concepts", teacher: "Dr. Kumar", room: "B201", now: false },
-];
+const defaultTodaysClasses = [];
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "🏠", section: "MAIN" },
@@ -44,13 +34,7 @@ const navItems = [
   { id: "imsbot", label: "IMS Bot", icon: "🤖", section: "TOOLS" },
 ];
 
-const defaultAttendanceSubjects = [
-  { name: "Data Structures", present: 33, total: 38, pct: 86 },
-  { name: "Mathematics III", present: 34, total: 38, pct: 90 },
-  { name: "OS Concepts", present: 29, total: 38, pct: 76 },
-  { name: "Database Systems", present: 35, total: 38, pct: 92 },
-  { name: "English Comm.", present: 27, total: 38, pct: 71 },
-];
+const defaultAttendanceSubjects = [];
 
 const defaultTimetableData = {
   Mon: [
@@ -83,13 +67,7 @@ const defaultTimetableData = {
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
-const marksData = [
-  { subject: "Data Structures", type: "Internal", score: 43, total: 50, pct: 86, grade: "A", color: "#1a9e8f" },
-  { subject: "Mathematics III", type: "Assignment", score: 18, total: 20, pct: 90, grade: "A+", color: "#3b82f6" },
-  { subject: "OS Concepts", type: "Internal", score: 28, total: 50, pct: 56, grade: "C", color: "#ef4444" },
-  { subject: "Database Systems", type: "Quiz", score: 9, total: 10, pct: 90, grade: "A+", color: "#1a9e8f" },
-  { subject: "English Comm.", type: "Assignment", score: 14, total: 20, pct: 70, grade: "B+", color: "#f59e0b" },
-];
+const marksData = [];
 
 const gradePoints = { "O": 10, "A+": 9, "A": 8, "B+": 7, "B": 6, "C": 5, "F": 0 };
 
@@ -121,14 +99,7 @@ const eventLegend = [
   { type: "event", label: "College Event", color: "#3b82f6" },
 ];
 
-const facultyList = [
-  { id: 1, name: "Dr. Ravi K.", course: "Data Structures", department: "CSE" },
-  { id: 2, name: "Dr. Priya S.", course: "Mathematics III", department: "Mathematics" },
-  { id: 3, name: "Prof. James", course: "Physics Lab", department: "Physics" },
-  { id: 4, name: "Dr. Kumar", course: "OS Concepts", department: "CSE" },
-  { id: 5, name: "Prof. Rao", course: "English Comm.", department: "English" },
-  { id: 6, name: "Prof. Ahmed", course: "Database Systems", department: "CSE" },
-];
+const facultyList = [];
 
 const feedbackQuestions = [
   "Clarity of communication and explanation of concepts",
@@ -143,66 +114,7 @@ const feedbackQuestions = [
   "Overall teaching effectiveness and mentorship",
 ];
 
-// ─── LMS DATA ────────────────────────────────────────────────────────────────
 
-const lmsCourses = [
-  {
-    id: 1, name: "Data Structures", code: "CSE301", teacher: "Dr. Ravi K.", color: "#1a9e8f",
-    notes: [
-      { id: 1, title: "Unit 1 - Arrays & Linked Lists", file: "unit1_arrays.pdf", size: "2.4 MB", date: "2026-03-10", type: "pdf" },
-      { id: 2, title: "Unit 2 - Trees & Graphs", file: "unit2_trees.pdf", size: "3.1 MB", date: "2026-03-18", type: "pdf" },
-      { id: 3, title: "Unit 3 - Sorting Algorithms", file: "unit3_sorting.pptx", size: "5.7 MB", date: "2026-03-25", type: "pptx" },
-      { id: 4, title: "Lab Manual - DS", file: "ds_lab_manual.pdf", size: "1.8 MB", date: "2026-04-01", type: "pdf" },
-    ],
-    assignments: [
-      { id: 1, title: "Assignment 1 - Linked List Implementation", due: "2026-04-12", marks: 20, status: "submitted", submittedFile: "arjun_ds_a1.pdf" },
-      { id: 2, title: "Assignment 2 - BST Operations", due: "2026-04-20", marks: 20, status: "pending", submittedFile: null },
-    ],
-  },
-  {
-    id: 2, name: "Mathematics III", code: "MA301", teacher: "Dr. Priya S.", color: "#3b82f6",
-    notes: [
-      { id: 1, title: "Unit 1 - Laplace Transforms", file: "laplace.pdf", size: "1.9 MB", date: "2026-03-08", type: "pdf" },
-      { id: 2, title: "Unit 2 - Fourier Series", file: "fourier.pdf", size: "2.2 MB", date: "2026-03-20", type: "pdf" },
-      { id: 3, title: "Formula Sheet", file: "formula_sheet.pdf", size: "0.5 MB", date: "2026-04-02", type: "pdf" },
-    ],
-    assignments: [
-      { id: 1, title: "Assignment 1 - Laplace Problems", due: "2026-04-10", marks: 15, status: "submitted", submittedFile: "arjun_ma_a1.pdf" },
-      { id: 2, title: "Assignment 2 - Fourier Analysis", due: "2026-04-25", marks: 15, status: "pending", submittedFile: null },
-    ],
-  },
-  {
-    id: 3, name: "OS Concepts", code: "CSE302", teacher: "Dr. Kumar", color: "#a855f7",
-    notes: [
-      { id: 1, title: "Unit 1 - Process Management", file: "os_unit1.pdf", size: "2.8 MB", date: "2026-03-05", type: "pdf" },
-      { id: 2, title: "Unit 2 - Memory Management", file: "os_unit2.pdf", size: "3.4 MB", date: "2026-03-19", type: "pdf" },
-    ],
-    assignments: [
-      { id: 1, title: "Assignment 1 - Scheduling Algorithms", due: "2026-04-15", marks: 25, status: "pending", submittedFile: null },
-    ],
-  },
-  {
-    id: 4, name: "Database Systems", code: "CSE303", teacher: "Prof. Ahmed", color: "#22c55e",
-    notes: [
-      { id: 1, title: "Unit 1 - ER Diagrams & SQL", file: "db_unit1.pdf", size: "3.0 MB", date: "2026-03-12", type: "pdf" },
-      { id: 2, title: "Unit 2 - Normalization", file: "db_unit2.pdf", size: "2.6 MB", date: "2026-03-28", type: "pdf" },
-      { id: 3, title: "SQL Lab Exercises", file: "sql_lab.pdf", size: "1.2 MB", date: "2026-04-05", type: "pdf" },
-    ],
-    assignments: [
-      { id: 1, title: "DB Design Project - Phase 1", due: "2026-04-18", marks: 30, status: "submitted", submittedFile: "arjun_db_project.pdf" },
-    ],
-  },
-  {
-    id: 5, name: "English Comm.", code: "ENG301", teacher: "Prof. Rao", color: "#f59e0b",
-    notes: [
-      { id: 1, title: "Technical Writing Guide", file: "tech_writing.pdf", size: "1.4 MB", date: "2026-03-10", type: "pdf" },
-      { id: 2, title: "Presentation Skills Notes", file: "presentation.pptx", size: "4.2 MB", date: "2026-03-22", type: "pptx" },
-    ],
-    assignments: [
-      { id: 1, title: "Technical Report Writing", due: "2026-04-14", marks: 20, status: "pending", submittedFile: null },
-    ],
-  },
-];
 
 // ─── SEATING DATA ────────────────────────────────────────────────────────────
 
@@ -279,7 +191,7 @@ const examSeatingData = [
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
-function generateNotifications(attendanceSubjects, marksData, examSeatingData) {
+function generateNotifications(attendanceSubjects, marksData) {
   const notifs = [];
   attendanceSubjects.forEach(sub => {
     if (sub.pct < 75) {
@@ -306,17 +218,6 @@ function generateNotifications(attendanceSubjects, marksData, examSeatingData) {
         read: false,
       });
     }
-  });
-  examSeatingData.filter(e => e.released).forEach(e => {
-    notifs.push({
-      id: `seat-${e.id}`,
-      type: "info",
-      icon: "🪑",
-      title: "Seating Arrangement Released",
-      message: `Seating for ${e.examName} has been uploaded. Your seat: ${e.seatNumber} in ${e.hallNumber}.`,
-      time: "1 hour ago",
-      read: false,
-    });
   });
   notifs.push({
     id: "lms-note",
@@ -712,7 +613,43 @@ function MarksPage() {
 // ─── LMS PAGE ─────────────────────────────────────────────────────────────────
 
 function LMSPage() {
-  const [courses, setCourses] = useState(lmsCourses);
+  const [courses, setCourses] = useState([]);
+  
+  useEffect(() => {
+    const fetchLms = async () => {
+      try {
+        const materials = await api.getLmsMaterialsForStudent();
+        // Group by subject to build the course structure expected by the UI
+        const grouped = {};
+        materials.forEach(mat => {
+          if (!grouped[mat.subject]) {
+            grouped[mat.subject] = {
+              id: mat.subject,
+              name: mat.subject,
+              code: "",
+              teacher: mat.facultyName || "Unknown",
+              color: "#1a9e8f", // Default color
+              notes: [],
+              assignments: []
+            };
+          }
+          if (mat.type === "assignment") {
+             grouped[mat.subject].assignments.push({
+               id: mat.id, title: mat.title, due: "N/A", marks: 100, status: "pending", submittedFile: null
+             });
+          } else {
+             grouped[mat.subject].notes.push({
+               id: mat.id, title: mat.title, file: "View Content", size: mat.fileSizeKb ? `${mat.fileSizeKb} KB` : "N/A", date: new Date(mat.uploadedAt).toLocaleDateString(), type: "pdf"
+             });
+          }
+        });
+        setCourses(Object.values(grouped));
+      } catch (err) {
+        console.error("Failed to load LMS data", err);
+      }
+    };
+    fetchLms();
+  }, []);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [activeTab, setActiveTab] = useState("notes");
   const [uploading, setUploading] = useState(false);
@@ -993,16 +930,28 @@ function CalendarPage() {
 function ExamSeatingPage() {
   const { student } = useContext(StudentContext);
   const [selectedExam, setSelectedExam] = useState(null);
-  const now = new Date();
+  const [allocations, setAllocations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const isViewable = (exam) => {
-    if (!exam.released) return false;
-    return true;
-  };
+  useEffect(() => {
+    if (student?.id) {
+      api.getAllocationsForStudent(student.id)
+        .then(res => {
+           setAllocations(res);
+           setLoading(false);
+        })
+        .catch(err => {
+           console.error("Failed to fetch seating allocations", err);
+           setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [student?.id]);
 
-  const exam = examSeatingData.find(e => e.id === selectedExam);
+  const exam = allocations.find(e => e.examName === selectedExam);
 
-  if (selectedExam && exam && isViewable(exam)) {
+  if (selectedExam && exam) {
     return (
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
@@ -1019,7 +968,7 @@ function ExamSeatingPage() {
             <div>
               <div style={{ fontSize: 11, color: "#1a9e8f", letterSpacing: 2, fontWeight: 700, marginBottom: 4 }}>COLLEGE OF ENGINEERING — EXAM ADMIT CARD</div>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{exam.examName}</div>
-              <div style={{ fontSize: 13, color: "#7a9ab5", marginTop: 2 }}>Exam Code: {exam.examCode}</div>
+              <div style={{ fontSize: 13, color: "#7a9ab5", marginTop: 2 }}>Exam Code: {exam.examName.replace(/\s+/g, '-').toUpperCase()}</div>
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 11, color: "#7a9ab5", marginBottom: 4 }}>STATUS</div>
@@ -1030,12 +979,12 @@ function ExamSeatingPage() {
           <div style={{ padding: "28px 32px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 28 }}>
               {[
-                { label: "Student Name", value: student.name },
-                { label: "Register Number", value: student.id },
-                { label: "Class", value: exam.className },
-                { label: "Department", value: "Computer Science & Engineering" },
-                { label: "Exam Date", value: new Date(exam.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) },
-                { label: "Exam Time", value: exam.time },
+                { label: "Student Name", value: exam.studentName || student.name },
+                { label: "Register Number", value: exam.rollNumber || student.id },
+                { label: "Class", value: student.section || "N/A" },
+                { label: "Department", value: student.department || "Unknown" },
+                { label: "Exam Date", value: new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) },
+                { label: "Exam Time", value: "Upcoming" },
               ].map((field, i) => (
                 <div key={i}>
                   <div style={{ fontSize: 11, color: "#7a9ab5", letterSpacing: 0.5, marginBottom: 4 }}>{field.label.toUpperCase()}</div>
@@ -1046,9 +995,9 @@ function ExamSeatingPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
               {[
-                { icon: "🏛️", label: "Hall Number", value: exam.hallNumber, color: "#3b82f6" },
-                { icon: "🪑", label: "Seat Number", value: exam.seatNumber, color: "#1a9e8f" },
-                { icon: "👨‍🏫", label: "Invigilator", value: exam.invigilator, color: "#a855f7" },
+                { icon: "🏛️", label: "Hall Number", value: exam.hallInfo, color: "#3b82f6" },
+                { icon: "🪑", label: "Seat Number", value: exam.seatLabel, color: "#1a9e8f" },
+                { icon: "👨‍🏫", label: "Invigilator", value: exam.facultyInvigilator || "Assigned", color: "#a855f7" },
               ].map((item, i) => (
                 <div key={i} style={{ background: item.color + "15", border: `1px solid ${item.color}44`, borderRadius: 12, padding: "16px 20px", textAlign: "center" }}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>{item.icon}</div>
@@ -1060,12 +1009,12 @@ function ExamSeatingPage() {
 
             <div style={{ background: "#f59e0b15", border: "1px solid #f59e0b44", borderRadius: 10, padding: "14px 18px" }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", marginBottom: 6 }}>📋 INSTRUCTIONS</div>
-              <div style={{ fontSize: 13, color: "#d4a853", lineHeight: 1.6 }}>{exam.instructions}</div>
+              <div style={{ fontSize: 13, color: "#d4a853", lineHeight: 1.6 }}>Bring your ID card and hall ticket. No electronic devices allowed.</div>
             </div>
           </div>
 
           <div style={{ background: "#0d1b2a", padding: "14px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 12, color: "#5a7a95" }}>Seating released at: {exam.releaseTime} on {exam.date}</div>
+            <div style={{ fontSize: 12, color: "#5a7a95" }}>Seating released successfully</div>
             <button style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, color: "#fff", padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🖨️ Print</button>
           </div>
         </div>
@@ -1078,49 +1027,36 @@ function ExamSeatingPage() {
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontSize: 13, color: "#1a9e8f", marginBottom: 6 }}>🪑 Examination</div>
         <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0 }}>Exam Seating Arrangement</h1>
-        <p style={{ fontSize: 14, color: "#7a9ab5", margin: "8px 0 0" }}>Seating is visible 20 minutes before the exam time once released by admin.</p>
-      </div>
-
-      <div style={{ background: "#1a9e8f15", border: "1px solid #1a9e8f44", borderRadius: 10, padding: "14px 18px", marginBottom: 24, display: "flex", gap: 10, alignItems: "center" }}>
-        <span style={{ fontSize: 20 }}>🪑</span>
-        <div style={{ fontSize: 13, color: "#9ab5cc" }}>
-          <strong style={{ color: "#1a9e8f" }}>CAT 2 - Data Structures</strong> seating arrangement has been released! Your seat is <strong style={{ color: "#1a9e8f" }}>A3-24</strong> in Block A Hall 3. Exam at 10:00 AM today.
-        </div>
+        <p style={{ fontSize: 14, color: "#7a9ab5", margin: "8px 0 0" }}>Seating is visible 30 minutes before the exam time once released by admin.</p>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {examSeatingData.map(exam => {
-          const viewable = isViewable(exam);
-          return (
-            <div key={exam.id} style={{ background: "#162033", borderRadius: 14, border: `1px solid ${viewable ? "#1a9e8f55" : "#1e3a52"}`, padding: 24, display: "flex", alignItems: "center", gap: 20 }}>
-              <div style={{ width: 56, height: 56, borderRadius: 14, background: viewable ? "#1a9e8f22" : "#1e3a5244", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🪑</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 700 }}>{exam.examName}</div>
-                <div style={{ fontSize: 12, color: "#7a9ab5", marginTop: 3 }}>{exam.examCode} • {exam.date} • {exam.time}</div>
-                {viewable && (
-                  <div style={{ fontSize: 13, color: "#1a9e8f", marginTop: 6 }}>
-                    Hall: <strong>{exam.hallNumber}</strong> &nbsp;|&nbsp; Seat: <strong>{exam.seatNumber}</strong>
-                  </div>
-                )}
-              </div>
-              <div style={{ textAlign: "right" }}>
-                {viewable ? (
-                  <button onClick={() => setSelectedExam(exam.id)} style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, color: "#fff", padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View Seat Card</button>
-                ) : (
-                  <div>
-                    <div style={{ background: "#1e3a5244", border: "1px solid #1e3a52", borderRadius: 8, color: "#5a7a95", padding: "10px 20px", fontSize: 13 }}>🔒 Not Released</div>
-                    <div style={{ fontSize: 11, color: "#5a7a95", marginTop: 6 }}>Available {exam.releaseTime} on exam day</div>
-                  </div>
-                )}
-              </div>
-              <div>
-                <span style={{ background: viewable ? "#22c55e22" : "#1e3a5244", color: viewable ? "#22c55e" : "#5a7a95", border: `1px solid ${viewable ? "#22c55e55" : "#1e3a52"}`, borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>
-                  {viewable ? "RELEASED" : "PENDING"}
-                </span>
+        {loading ? (
+          <div style={{ color: "#7a9ab5", padding: "20px 0" }}>Loading seating assignments...</div>
+        ) : allocations.length === 0 ? (
+          <div style={{ background: "#162033", padding: "30px", borderRadius: 14, textAlign: "center", border: "1px solid #1e3a52", color: "#7a9ab5" }}>
+            No seating arrangements have been released for your upcoming exams yet.
+          </div>
+        ) : allocations.map((alloc, idx) => (
+          <div key={idx} style={{ background: "#162033", borderRadius: 14, border: `1px solid #1a9e8f55`, padding: 24, display: "flex", alignItems: "center", gap: 20 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: "#1a9e8f22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🪑</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{alloc.examName}</div>
+              <div style={{ fontSize: 12, color: "#7a9ab5", marginTop: 3 }}>Upcoming Exam</div>
+              <div style={{ fontSize: 13, color: "#1a9e8f", marginTop: 6 }}>
+                Hall: <strong>{alloc.hallInfo}</strong> &nbsp;|&nbsp; Seat: <strong>{alloc.seatLabel}</strong>
               </div>
             </div>
-          );
-        })}
+            <div style={{ textAlign: "right" }}>
+              <button onClick={() => setSelectedExam(alloc.examName)} style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 8, color: "#fff", padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View Seat Card</button>
+            </div>
+            <div>
+              <span style={{ background: "#22c55e22", color: "#22c55e", border: `1px solid #22c55e55`, borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>
+                RELEASED
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1619,8 +1555,13 @@ function StudentDashboard({ onLogout }) {
       
       const userId = user.userId || user.id;
 
-      // 1. Fetch Attendance
-      api.getStudentSummary(userId).then(res => {
+      // 0. Resolve true student ID via mapping
+      api.getAllStudents().then(allStudents => {
+        const myStudent = allStudents.find(s => s.user.id === userId);
+        const studentId = myStudent ? myStudent.id : userId;
+
+        // 1. Fetch Attendance
+        api.getStudentSummary(studentId).then(res => {
         const attData = res.map(s => ({
           name: s.subjectName,
           present: s.present,
@@ -1641,30 +1582,9 @@ function StudentDashboard({ onLogout }) {
           setSubjectAttendance(subjAtt);
         }
       }).catch(err => {
-         console.error("Attendance err (Backend missing) - Falling back to mock data", err);
-         let mockAttSubjs = JSON.parse(JSON.stringify(defaultAttendanceSubjects));
-         try {
-           const logs = JSON.parse(localStorage.getItem('ims_mock_attendance')) || [];
-           const myId = user.username || user.employeeIdOrRollNumber || user.id || "21CSE042";
-           // Fallback demo matching: If the user is default, maybe they're 21CSE001 in faculty roster
-           const searchId = myId === "21CSE042" ? "21CSE001" : myId;
-           const myLogs = logs.filter(r => String(r.studentId) === String(searchId));
-           
-           if (myLogs.length > 0) {
-             mockAttSubjs = mockAttSubjs.map(sub => {
-                const subLogs = myLogs.filter(r => r.subject === sub.name);
-                if (subLogs.length > 0) {
-                   const extraTotal = subLogs.length;
-                   const extraPresent = subLogs.filter(r => r.status === "present").length;
-                   sub.total += extraTotal;
-                   sub.present += extraPresent;
-                   sub.pct = Math.round((sub.present / sub.total) * 100);
-                }
-                return sub;
-             });
-           }
-         } catch(e) {}
-         
+         console.error("Attendance err (Backend error)", err);
+         let mockAttSubjs = defaultAttendanceSubjects || [];
+
          setAttendanceSubjects(mockAttSubjs);
          const overallPct = mockAttSubjs.length > 0 ? Math.round(mockAttSubjs.reduce((acc, curr) => acc + curr.pct, 0) / mockAttSubjs.length) : 100;
          setStudent(prev => ({ ...prev, attendance: overallPct }));
@@ -1675,7 +1595,8 @@ function StudentDashboard({ onLogout }) {
            color: a.pct >= 85 ? "#1a9e8f" : a.pct >= 75 ? "#f0a500" : "#ef4444"
          }));
          setSubjectAttendance(subjAtt);
-      });
+       }); // end getStudentSummary
+      }).catch(err => console.error("Could not evaluate allStudents for real ID", err));
 
       // 2. Fetch Timetable
       if (user.dept && user.year && user.section) {
@@ -1744,7 +1665,7 @@ function StudentDashboard({ onLogout }) {
               present: s.present,
               total: s.totalClasses
             }));
-            const localAttNotifs = generateNotifications(attSubjs, marksData, examSeatingData);
+            const localAttNotifs = generateNotifications(attSubjs, marksData);
             setNotifications([...mappedNotifs, ...localAttNotifs.filter(n => n.id.startsWith("att-"))]);
          }).catch(() => setNotifications(mappedNotifs));
          
@@ -1756,9 +1677,9 @@ function StudentDashboard({ onLogout }) {
               present: s.present,
               total: s.totalClasses
             }));
-            setNotifications(generateNotifications(attSubjs, marksData, examSeatingData));
+            setNotifications(generateNotifications(attSubjs, marksData));
          }).catch(() => {
-            setNotifications(generateNotifications(defaultAttendanceSubjects, marksData, examSeatingData));
+            setNotifications(generateNotifications(defaultAttendanceSubjects, marksData));
          });
       });
     }

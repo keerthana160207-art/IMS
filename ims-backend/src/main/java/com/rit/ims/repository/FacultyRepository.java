@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface FacultyRepository extends JpaRepository<Faculty, Long> {
     Optional<Faculty> findByUserId(Long userId);
     Optional<Faculty> findByEmployeeId(String employeeId);
+    Optional<Faculty> findByUser(com.rit.ims.entity.User user);
 }
