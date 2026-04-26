@@ -99,8 +99,22 @@ export const api = {
 
   // Users Management
   getCurrentUser: () => authFetch('/users/me'),
-  getAllStudents: () => authFetch('/users/students'),
+  getAllStudents: () => authFetch('/users/students').then(students => 
+    students.filter(s => {
+      const un = s.user?.username;
+      if (!un) return false;
+      if (!un.startsWith("student")) return false;
+      const num = parseInt(un.replace("student", ""), 10);
+      return num >= 1 && num <= 30;
+    })
+  ),
   getAllFaculty: () => authFetch('/users/faculty'),
   getStudentById: (id) => authFetch(`/users/student/${id}`),
   getFacultyById: (id) => authFetch(`/users/faculty/${id}`),
+
+  // Feedback
+  submitFeedback: (data) => authFetch('/feedback/submit', { method: 'POST', body: JSON.stringify(data) }),
+  getFacultyFeedback: (facultyId) => authFetch(`/feedback/faculty/${facultyId}`),
+  getFacultyFeedbackSummary: (facultyId) => authFetch(`/feedback/faculty/${facultyId}/summary`),
+  getAdminFeedbackSummary: () => authFetch('/feedback/admin/summary'),
 };

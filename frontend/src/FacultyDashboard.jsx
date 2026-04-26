@@ -18,6 +18,7 @@ const navItems = [
   { id: "timetable",     label: "Timetable",          icon: "📅", section: "TEACHING" },
   { id: "courseplanner", label: "Course Planner",     icon: "📖", section: "TEACHING" },
   { id: "lms",           label: "LMS Uploader",       icon: "📚", section: "TEACHING" },
+  { id: "feedback",      label: "Course Evaluation",  icon: "⭐", section: "TEACHING" },
   { id: "certificates",  label: "Certificates",       icon: "🎓", section: "STUDENTS" },
   { id: "leaveRequests", label: "Leave/OD Requests",  icon: "📝", section: "STUDENTS" },
   { id: "announcements", label: "Announcements",      icon: "📢", section: "TOOLS" },
@@ -124,29 +125,7 @@ const leaveRequestsData = [
 ];
 
 // ── Student Marks + CGPA Data ─────────────────────────────────────────────────
-const rosterData = {
-  "CSE-A": [
-    { name: "Arjun Ravi", id: "21CSE001" },
-    { name: "Kiran Raj",  id: "21CSE003" },
-    { name: "Meena S.",   id: "21CSE006" },
-    { name: "Rohit P.",   id: "21CSE007" },
-    { name: "Sneha K.",   id: "21CSE008" },
-  ],
-  "CSE-B": [
-    { name: "Priya Nair", id: "21CSE002" },
-    { name: "Ravi Kumar", id: "21CSE005" },
-    { name: "Arun M.",    id: "21CSE009" },
-    { name: "Divya R.",   id: "21CSE010" },
-    { name: "Suresh T.",  id: "21CSE011" },
-  ],
-  "CSE-C": [
-    { name: "Anjali M.",  id: "21CSE004" },
-    { name: "Vikram B.",  id: "21CSE012" },
-    { name: "Nisha L.",   id: "21CSE013" },
-    { name: "Praveen C.", id: "21CSE014" },
-    { name: "Lakshmi D.", id: "21CSE015" },
-  ],
-};
+// Removed rosterData
 
 const marksData = {
   "21CSE001": { cat1: 43, cat2: 45, assignment: 18, lab: 24, total: 130, cgpa: 8.4 },
@@ -166,23 +145,7 @@ const marksData = {
   "21CSE015": { cat1: 22, cat2: 24, assignment: 9,  lab: 14, total: 69,  cgpa: 4.6 },
 };
 
-const mockHistory = {
-  "21CSE001": { "Data Structures": { present: 18, total: 21 }, "DS Lab": { present: 10, total: 11 }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE003": { "Data Structures": { present: 20, total: 21 }, "DS Lab": { present: 11, total: 11 }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE006": { "Data Structures": { present: 15, total: 21 }, "DS Lab": { present: 8,  total: 11 }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE007": { "Data Structures": { present: 19, total: 21 }, "DS Lab": { present: 9,  total: 11 }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE008": { "Data Structures": { present: 16, total: 21 }, "DS Lab": { present: 10, total: 11 }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE002": { "Data Structures": { present: 14, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE005": { "Data Structures": { present: 18, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE009": { "Data Structures": { present: 12, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE010": { "Data Structures": { present: 20, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE011": { "Data Structures": { present: 17, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 } },
-  "21CSE004": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 13, total: 21 } },
-  "21CSE012": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 18, total: 21 } },
-  "21CSE013": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 15, total: 21 } },
-  "21CSE014": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 20, total: 21 } },
-  "21CSE015": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 10, total: 21 } },
-};
+// Removed mockHistory
 
 const thStyle = (t) => ({ padding: "11px 18px", textAlign: "left", fontSize: 11, color: t.subtext, fontWeight: 700, letterSpacing: 1 });
 const tdStyle = (t) => ({ padding: "13px 18px", fontSize: 13, color: t.text });
@@ -384,7 +347,7 @@ function LMSPage({ t }) {
        return allStudents.filter(stu => (stu.department === selectedSection.split('-')[0] && stu.section === selectedSection.split('-')[1]) || true)
           .map(stu => ({ name: stu.user?.fullName || stu.user?.username || "Student", id: stu.user?.username || stu.id }));
     }
-    return rosterData[selectedSection] || [];
+    return [];
   };
 
   const downloadAttendance = () => {
@@ -1017,11 +980,18 @@ function IMSBotPage({ t, announcements }) {
 
 // ── INTERNAL MARKS PAGE (existing, keep as is) ────────────────────────────────
 function InternalMarksPage({ t }) {
+  const { allStudents = [] } = useContext(FacultyContext) || {};
   const [activeSection, setActiveSection] = useState("CSE-A");
   const [activeTab, setActiveTab] = useState("marks");
   const [search, setSearch] = useState("");
 
-  const roster = rosterData[activeSection] || [];
+  const roster = allStudents
+    .filter(stu => stu.user && stu.user.username)
+    .filter(stu => !stu.section || activeSection.includes(stu.section))
+    .map(stu => ({
+      name: stu.user?.fullName || stu.user?.username || "Unknown",
+      id: stu.user?.username || "Unknown",
+    }));
 
   const getMarkStatus = (total) => {
     if (total >= 120) return { label: "GOOD", color: "#22c55e", bg: "#22c55e22", border: "#22c55e55" };
@@ -1204,9 +1174,21 @@ function InternalMarksPage({ t }) {
 
 // ── ATTENDANCE RECORDS PAGE (read-only view from attendanceLog) ───────────────
 function AttendanceRecordsPage({ attendanceLog, t }) {
+  const { allStudents = [] } = useContext(FacultyContext);
   const [activeSection, setActiveSection] = useState("CSE-A");
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [summaries, setSummaries] = useState({});
+
+  useEffect(() => {
+    allStudents.forEach(stu => {
+      if (stu.id && !summaries[stu.id]) {
+        api.getStudentSummary(stu.id)
+          .then(res => setSummaries(prev => ({ ...prev, [stu.id]: res })))
+          .catch(err => console.error("Error fetching summary for", stu.id, err));
+      }
+    });
+  }, [allStudents]);
 
   const getStatus = (pct) => {
     if (pct === null) return { label: "N/A",  color: "#7a9ab5", bg: "#7a9ab522", border: "#7a9ab555" };
@@ -1215,14 +1197,29 @@ function AttendanceRecordsPage({ attendanceLog, t }) {
     return                  { label: "RISK",  color: "#ef4444", bg: "#ef444422", border: "#ef444455" };
   };
 
-  const roster = rosterData[activeSection] || [];
+  const roster = allStudents
+    .filter(stu => stu.user && stu.user.username)
+    .filter(stu => {
+      // Very naive section check
+      if (!stu.section) return true;
+      return activeSection.includes(stu.section);
+    })
+    .map(stu => ({
+      name: stu.user?.fullName || stu.user?.username || "Unknown",
+      id: stu.user?.username || "Unknown",
+      dbId: stu.id,
+      department: stu.department,
+      section: stu.section
+    }));
+
   const rows = roster.map(stu => {
+    const studentSummary = summaries[stu.dbId] || [];
     const subjectStats = subjects.map(sub => {
-      const hist      = mockHistory[stu.id]?.[sub] || { present: 0, total: 0 };
-      const logRecs   = attendanceLog.filter(r => r.studentId === stu.id && r.subject === sub && r.section === activeSection);
-      const present   = hist.present + logRecs.filter(r => r.status === "present").length;
-      const total     = hist.total + logRecs.length;
-      const pct       = total === 0 ? null : Math.round((present / total) * 100);
+      // Find matching subject from backend summary
+      const sum = studentSummary.find(s => s.subjectName === sub);
+      const present = sum ? sum.present : 0;
+      const total = sum ? sum.totalClasses : 0;
+      const pct = total === 0 ? null : Math.round((present / total) * 100);
       return { subject: sub, present, total, pct };
     });
     const active = subjectStats.filter(s => s.total > 0);
@@ -1237,7 +1234,8 @@ function AttendanceRecordsPage({ attendanceLog, t }) {
   const sectionAvg = rows.filter(r => r.overallPct !== null);
   const avgPct  = sectionAvg.length ? Math.round(sectionAvg.reduce((a, r) => a + r.overallPct, 0) / sectionAvg.length) : 0;
   const atRisk  = rows.filter(r => r.overallPct !== null && r.overallPct < 75).length;
-  const liveLogs= attendanceLog.filter(r => r.section === activeSection).length;
+  // This live logs metric uses the current unsaved/saved active session
+  const liveLogs = attendanceLog.filter(r => r.section === activeSection).length;
 
   return (
     <div>
@@ -1346,6 +1344,115 @@ function StubPage({ title, icon, t }) {
       <div style={{ fontSize: 56 }}>{icon}</div>
       <div style={{ fontSize: 24, fontWeight: 700, color: t.text }}>{title}</div>
       <div style={{ fontSize: 14, color: t.subtext }}>This section is under construction.</div>
+    </div>
+  );
+}
+
+// ── COURSE EVALUATION PAGE ──────────────────────────────────────────────────────
+function FacultyFeedbackPage({ t }) {
+  const { faculty } = useContext(FacultyContext);
+  const [summary, setSummary] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeedback() {
+      if (!faculty || !faculty.id) return;
+      try {
+        setLoading(true);
+        // Note: the backend uses faculty ID which comes from faculty entity, 
+        // since we might not have the DB ID in faculty context easily if it's mixed with user ID,
+        // we use the backend call. Assuming faculty.id here is the faculty DB ID or can be matched.
+        // Actually, myFacultyData.id was the DB ID which was not stored directly in faculty.
+        // Wait, earlier we didn't save myFacultyData.id into faculty context.
+        // Let's use api.getFacultyFeedbackSummary which takes faculty id. 
+        // If it fails, fallback to empty.
+        // A better way is to use the user's DB ID if we can't find faculty ID.
+        // For now let's pass the ID we have. 
+        // We can fetch all faculty to find our own DB ID.
+        const facs = await api.getAllFaculty();
+        const me = facs.find(f => f.user?.username === faculty.username || f.user?.id === faculty.userId);
+        if (me) {
+          const sum = await api.getFacultyFeedbackSummary(me.id);
+          const list = await api.getFacultyFeedback(me.id);
+          setSummary(sum);
+          setFeedbacks(list);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFeedback();
+  }, [faculty]);
+
+  if (loading) return <div style={{ color: t.subtext, padding: 24 }}>Loading evaluation data...</div>;
+  if (!summary) return <div style={{ color: t.subtext, padding: 24 }}>No evaluation data found.</div>;
+
+  return (
+    <div>
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 13, color: "#1a9e8f", marginBottom: 6 }}>⭐ Course Evaluation</div>
+        <h1 style={{ fontSize: 30, fontWeight: 800, margin: "0 0 6px", color: t.text }}>Student Feedback</h1>
+        <p style={{ fontSize: 14, color: t.subtext, margin: 0 }}>Anonymous course feedback from your students.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24, marginBottom: 24 }}>
+        <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 64, fontWeight: 800, color: "#1a9e8f", lineHeight: 1 }}>{summary.averageRating?.toFixed(1)}</div>
+          <div style={{ fontSize: 14, color: t.subtext, marginTop: 8, fontWeight: 600 }}>Average Score</div>
+          <div style={{ display: "flex", gap: 4, marginTop: 12 }}>
+            {[1,2,3,4,5].map(star => (
+              <span key={star} style={{ color: star <= Math.round(summary.averageRating) ? "#f59e0b" : t.border, fontSize: 24 }}>★</span>
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: t.subtext, marginTop: 12 }}>Based on {summary.totalFeedbacks} ratings</div>
+        </div>
+
+        <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 16 }}>Rating Breakdown</div>
+          {[
+            { stars: 5, count: summary.fiveStarCount, color: "#22c55e" },
+            { stars: 4, count: summary.fourStarCount, color: "#1a9e8f" },
+            { stars: 3, count: summary.threeStarCount, color: "#3b82f6" },
+            { stars: 2, count: summary.twoStarCount, color: "#f59e0b" },
+            { stars: 1, count: summary.oneStarCount, color: "#ef4444" },
+          ].map(row => {
+            const pct = summary.totalFeedbacks > 0 ? (row.count / summary.totalFeedbacks) * 100 : 0;
+            return (
+              <div key={row.stars} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                <div style={{ width: 45, fontSize: 13, color: t.subtext, fontWeight: 600 }}>{row.stars} Stars</div>
+                <div style={{ flex: 1, height: 8, background: t.input, borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ width: `${pct}%`, height: "100%", background: row.color, borderRadius: 4 }} />
+                </div>
+                <div style={{ width: 30, fontSize: 13, color: t.text, fontWeight: 600, textAlign: "right" }}>{row.count}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ background: t.panelBg, borderRadius: 16, border: `1px solid ${t.border}`, overflow: "hidden" }}>
+        <div style={{ padding: "20px 24px", borderBottom: `1px solid ${t.border}` }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: t.text }}>Recent Comments</div>
+        </div>
+        <div>
+          {feedbacks.length === 0 ? <div style={{ padding: 24, color: t.subtext }}>No comments yet.</div> : 
+            feedbacks.map((fb, i) => (
+              <div key={i} style={{ padding: "20px 24px", borderBottom: i < feedbacks.length - 1 ? `1px solid ${t.border}` : "none" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <div style={{ display: "flex", gap: 2, color: "#f59e0b", fontSize: 14 }}>
+                    {[1,2,3,4,5].map(star => <span key={star} style={{ opacity: star <= fb.rating ? 1 : 0.3 }}>★</span>)}
+                  </div>
+                  <div style={{ fontSize: 12, color: t.subtext }}>{new Date(fb.createdAt).toLocaleDateString()}</div>
+                </div>
+                <div style={{ fontSize: 14, color: t.text, lineHeight: 1.5 }}>"{fb.comments}"</div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
     </div>
   );
 }
@@ -1562,6 +1669,7 @@ export default function FacultyDashboard({ onLogout, isDark, toggleTheme, t }) {
     if (active === "timetable")     return <TimetablePage t={t} />;
     if (active === "courseplanner") return <CoursePlannerPage t={t} />;
     if (active === "lms")           return <LMSPage t={t} />;
+    if (active === "feedback")      return <FacultyFeedbackPage t={t} />;
     if (active === "certificates")  return <CertificatesPage t={t} />;
     if (active === "leaveRequests") return <LeaveRequestsPage t={t} />;
     if (active === "announcements") return <AnnouncementsPage t={t} announcements={announcements} />;

@@ -8,47 +8,7 @@ const SESSION_DURATION = 60 * 60; // 60 minutes in seconds
 const subjects    = ["Data Structures", "DS Lab", "Algorithms", "Mathematics III"];
 const allSections = ["CSE-A", "CSE-B", "CSE-C"];
 
-const rosterData = {
-  "CSE-A": [
-    { name: "Arjun Ravi", id: "21CSE001" },
-    { name: "Kiran Raj",  id: "21CSE003" },
-    { name: "Meena S.",   id: "21CSE006" },
-    { name: "Rohit P.",   id: "21CSE007" },
-    { name: "Sneha K.",   id: "21CSE008" },
-  ],
-  "CSE-B": [
-    { name: "Priya Nair", id: "21CSE002" },
-    { name: "Ravi Kumar", id: "21CSE005" },
-    { name: "Arun M.",    id: "21CSE009" },
-    { name: "Divya R.",   id: "21CSE010" },
-    { name: "Suresh T.",  id: "21CSE011" },
-  ],
-  "CSE-C": [
-    { name: "Anjali M.",  id: "21CSE004" },
-    { name: "Vikram B.",  id: "21CSE012" },
-    { name: "Nisha L.",   id: "21CSE013" },
-    { name: "Praveen C.", id: "21CSE014" },
-    { name: "Lakshmi D.", id: "21CSE015" },
-  ],
-};
-
-const mockHistory = {
-  "21CSE001": { "Data Structures": { present: 18, total: 21 }, "DS Lab": { present: 10, total: 11 }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 5, total: 6 } },
-  "21CSE003": { "Data Structures": { present: 20, total: 21 }, "DS Lab": { present: 11, total: 11 }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 6, total: 6 } },
-  "21CSE006": { "Data Structures": { present: 15, total: 21 }, "DS Lab": { present: 8,  total: 11 }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 4, total: 6 } },
-  "21CSE007": { "Data Structures": { present: 19, total: 21 }, "DS Lab": { present: 9,  total: 11 }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 5, total: 6 } },
-  "21CSE008": { "Data Structures": { present: 16, total: 21 }, "DS Lab": { present: 10, total: 11 }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 3, total: 6 } },
-  "21CSE002": { "Data Structures": { present: 14, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE005": { "Data Structures": { present: 18, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE009": { "Data Structures": { present: 12, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE010": { "Data Structures": { present: 20, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE011": { "Data Structures": { present: 17, total: 21 }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 0, total: 0 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE004": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 13, total: 21 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE012": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 18, total: 21 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE013": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 15, total: 21 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE014": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 20, total: 21 }, "Mathematics III": { present: 0, total: 0 } },
-  "21CSE015": { "Data Structures": { present: 0,  total: 0  }, "DS Lab": { present: 0,  total: 0  }, "Algorithms": { present: 10, total: 21 }, "Mathematics III": { present: 0, total: 0 } },
-};
+// Removed mockData for backend integration
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const formatTime = (secs) => {
@@ -126,7 +86,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const { mySubjects = [], allStudents = [] } = useContext(FacultyContext) || {};
   const today = new Date().toISOString().split("T")[0];
 
-  const dynSubjects = mySubjects.length > 0 ? Array.from(new Set(mySubjects.map(s => s.name))) : subjects;
+  const dynSubjects = mySubjects.length > 0 ? Array.from(new Set(mySubjects.map(s => s.subjectName || s.name))) : subjects;
   const dynSections = mySubjects.length > 0 ? Array.from(new Set(mySubjects.map(s => s.section))) : allSections;
 
   // Setup state
@@ -150,17 +110,13 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   const isActive  = !!currentSession && !currentSession.locked;
   const isLocked  = !!currentSession?.locked;
   
-  const roster = allStudents.length > 0 
-    ? allStudents.filter(stu => (stu.department === section.split('-')[0] && stu.section === section.split('-')[1]) || true) 
-        .filter(stu => stu.user && stu.user.username) 
-        .map(stu => ({ name: stu.user.fullName || stu.user.username || "Unknown", id: stu.user.username || "Unknown", dbId: stu.id }))
-    : (rosterData[section] || []);
-
-  const activeRoster = (allStudents.length > 0 && allStudents.some(stu => stu.user && stu.user.username)) 
-    ? allStudents.map(stu => ({ name: stu.user?.fullName || stu.user?.username || "Unknown", id: stu.user?.username || "Unknown", dbId: stu.id })) 
-    : (rosterData[section] || []);
-  
-  const finalRoster = roster.length > 0 ? roster : activeRoster;
+  const finalRoster = allStudents.filter(stu => stu.user && stu.user.username).map(stu => ({
+    name: stu.user?.fullName || stu.user?.username || "Unknown",
+    id: stu.user?.username || "Unknown",
+    dbId: stu.id,
+    department: stu.department,
+    section: stu.section
+  }));
 
   // Tick the active session(s) down every second
   useEffect(() => {
@@ -186,7 +142,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
 
   const startSession = async () => {
     try {
-      const subjObj = mySubjects.find(s => s.name === subject);
+      const subjObj = mySubjects.find(s => (s.subjectName || s.name) === subject);
       const subjectIdToUse = subjObj ? subjObj.id : 1; // Fallback to 1 for demo
       
       let sessionId = null;
@@ -284,13 +240,12 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
   // Historical attendance for records tab
   const [viewTab, setViewTab] = useState("take"); // "take" | "history"
 
-  // Build attendance % from mockHistory + submitted logs for given student+subject
   const getAttendancePct = (studentId, sub) => {
-    const hist = mockHistory[studentId]?.[sub] || { present: 0, total: 0 };
+    // Relying on backend summaries is better, but since this is immediate UI local state fallback:
     const logRecords = attendanceLog.filter(r => r.studentId === studentId && r.subject === sub);
     const logPresent = logRecords.filter(r => r.status === "present").length;
-    const total  = hist.total + logRecords.length;
-    const present= hist.present + logPresent;
+    const total = logRecords.length;
+    const present = logPresent;
     if (total === 0) return null;
     return Math.round((present / total) * 100);
   };
@@ -564,9 +519,7 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
           {/* Per-subject attendance summary */}
           {dynSubjects.map(sub => {
             const rosterForSec = finalRoster || [];
-            // Only show subjects relevant to this section (based on mockHistory having data)
-            const hasData = rosterForSec.some(s => (mockHistory[s.id]?.[sub]?.total || 0) > 0 ||
-              attendanceLog.some(r => r.studentId === s.id && r.subject === sub));
+            const hasData = rosterForSec.some(s => attendanceLog.some(r => r.studentId === s.id && r.subject === sub));
             if (!hasData) return null;
 
             return (
@@ -585,11 +538,10 @@ export default function AttendancePage({ t, attendanceLog, setAttendanceLog }) {
                   </thead>
                   <tbody>
                     {rosterForSec.map((stu, i) => {
-                      const hist       = mockHistory[stu.id]?.[sub] || { present: 0, total: 0 };
                       const logRecs    = attendanceLog.filter(r => r.studentId === stu.id && r.subject === sub);
                       const logPresent = logRecs.filter(r => r.status === "present").length;
-                      const present    = hist.present + logPresent;
-                      const total      = hist.total + logRecs.length;
+                      const present    = logPresent;
+                      const total      = logRecs.length;
                       const pct        = total === 0 ? null : Math.round((present / total) * 100);
                       const st         = getStatusStyle(pct);
 

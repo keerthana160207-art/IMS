@@ -1064,11 +1064,25 @@ function ExamSeatingPage() {
 
 // ─── FEEDBACK PAGE ────────────────────────────────────────────────────────────
 
-function FeedbackPage() {
+function FeedbackPage({ studentId }) {
+  const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [ratings, setRatings] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [additionalComment, setAdditionalComment] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchFaculty() {
+      try {
+        const facs = await api.getAllFaculty();
+        setFacultyList(facs);
+      } catch (e) {
+        console.error("Failed to load faculty list", e);
+      }
+    }
+    fetchFaculty();
+  }, []);
 
   const ratingOptions = [
     { value: 1, label: "Poor", color: "#ef4444" },
@@ -1078,11 +1092,27 @@ function FeedbackPage() {
     { value: 5, label: "Excellent", color: "#22c55e" },
   ];
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedFaculty) { alert("Please select a faculty member"); return; }
     if (Object.keys(ratings).length !== feedbackQuestions.length) { alert("Please answer all questions"); return; }
-    setSubmitted(true);
-    setTimeout(() => { setSubmitted(false); setSelectedFaculty(null); setRatings({}); setAdditionalComment(""); }, 3000);
+    
+    setIsLoading(true);
+    try {
+      const avgRating = Math.round(avg());
+      await api.submitFeedback({
+        studentId: studentId || 1, // Fallback if no student ID passed
+        facultyId: selectedFaculty.id,
+        rating: avgRating,
+        comments: additionalComment || "No additional comments."
+      });
+      setSubmitted(true);
+      setTimeout(() => { setSubmitted(false); setSelectedFaculty(null); setRatings({}); setAdditionalComment(""); }, 3000);
+    } catch (e) {
+      console.error("Failed to submit feedback", e);
+      alert("Error submitting feedback. Ensure backend is running.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const avg = () => { const v = Object.values(ratings); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toFixed(1) : 0; };
@@ -1096,22 +1126,24 @@ function FeedbackPage() {
       {!selectedFaculty ? (
         <div style={{ background: "#162033", borderRadius: 14, border: "1px solid #1e3a52", padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Select Faculty to Evaluate</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
-            {facultyList.map((f) => (
-              <button key={f.id} onClick={() => setSelectedFaculty(f)} style={{ background: "#1a2c42", border: "1px solid #1e3a52", borderRadius: 10, padding: 16, textAlign: "left", cursor: "pointer" }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#1a9e8f" }}>{f.name}</div>
-                <div style={{ fontSize: 13, marginTop: 4 }}>{f.course}</div>
-                <div style={{ fontSize: 11, color: "#7a9ab5", marginTop: 2 }}>{f.department} Department</div>
-              </button>
-            ))}
-          </div>
+          {facultyList.length === 0 ? <div style={{ color: "#7a9ab5", fontStyle: "italic" }}>Loading faculty list...</div> : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+              {facultyList.map((f) => (
+                <button key={f.id} onClick={() => setSelectedFaculty(f)} style={{ background: "#1a2c42", border: "1px solid #1e3a52", borderRadius: 10, padding: 16, textAlign: "left", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={e => e.currentTarget.style.borderColor = "#1a9e8f"} onMouseOut={e => e.currentTarget.style.borderColor = "#1e3a52"}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1a9e8f" }}>{f.user?.fullName || "Faculty"}</div>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>{f.department || "General"} Department</div>
+                  <div style={{ fontSize: 11, color: "#7a9ab5", marginTop: 2 }}>{f.employeeIdOrRollNumber || f.id}</div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ background: "#162033", borderRadius: 14, border: "1px solid #1e3a52", overflow: "hidden" }}>
           <div style={{ padding: "20px 24px", background: "#1a2c42", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>{selectedFaculty.name}</div>
-              <div style={{ fontSize: 13, color: "#7a9ab5" }}>{selectedFaculty.course} • {selectedFaculty.department}</div>
+              <div style={{ fontSize: 18, fontWeight: 700 }}>{selectedFaculty.user?.fullName}</div>
+              <div style={{ fontSize: 13, color: "#7a9ab5" }}>{selectedFaculty.department} Department</div>
             </div>
             <button onClick={() => setSelectedFaculty(null)} style={{ background: "#ef444422", border: "1px solid #ef444455", color: "#ef4444", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Change</button>
           </div>
@@ -1121,23 +1153,23 @@ function FeedbackPage() {
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>{idx + 1}. {q}</div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   {ratingOptions.map(opt => (
-                    <button key={opt.value} onClick={() => setRatings({ ...ratings, [idx]: opt.value })} style={{ padding: "7px 14px", borderRadius: 8, border: ratings[idx] === opt.value ? `2px solid ${opt.color}` : "1px solid #1e3a52", background: ratings[idx] === opt.value ? opt.color + "22" : "transparent", color: ratings[idx] === opt.value ? opt.color : "#9ab5cc", fontWeight: ratings[idx] === opt.value ? 700 : 400, cursor: "pointer" }}>
+                    <button key={opt.value} onClick={() => setRatings({ ...ratings, [idx]: opt.value })} style={{ padding: "7px 14px", borderRadius: 8, border: ratings[idx] === opt.value ? `2px solid ${opt.color}` : "1px solid #1e3a52", background: ratings[idx] === opt.value ? opt.color + "22" : "transparent", color: ratings[idx] === opt.value ? opt.color : "#9ab5cc", fontWeight: ratings[idx] === opt.value ? 700 : 400, cursor: "pointer", transition: "all 0.15s" }}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
             ))}
-            <textarea value={additionalComment} onChange={e => setAdditionalComment(e.target.value)} placeholder="Additional comments..." rows={3} style={{ width: "100%", background: "#1a2c42", border: "1px solid #1e3a52", borderRadius: 10, padding: 12, color: "#e0e8f0", fontSize: 13, resize: "vertical", marginBottom: 16 }} />
+            <textarea value={additionalComment} onChange={e => setAdditionalComment(e.target.value)} placeholder="Additional comments (optional)..." rows={3} style={{ width: "100%", background: "#1a2c42", border: "1px solid #1e3a52", borderRadius: 10, padding: 12, color: "#e0e8f0", fontSize: 13, resize: "vertical", marginBottom: 16, outline: "none" }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ background: "#1a9e8f22", padding: "8px 16px", borderRadius: 8 }}>
-                <span style={{ fontSize: 12, color: "#7a9ab5" }}>Avg: </span>
+                <span style={{ fontSize: 12, color: "#7a9ab5" }}>Avg Score: </span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: "#1a9e8f" }}>{avg()}</span>
                 <span style={{ fontSize: 12, color: "#7a9ab5" }}>/5</span>
               </div>
-              <button onClick={handleSubmit} style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 10, padding: "12px 28px", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Submit Feedback</button>
+              <button onClick={handleSubmit} disabled={isLoading} style={{ background: "linear-gradient(135deg,#1a9e8f,#17b897)", border: "none", borderRadius: 10, padding: "12px 28px", color: "#fff", fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer", opacity: isLoading ? 0.7 : 1 }}>{isLoading ? "Submitting..." : "Submit Feedback"}</button>
             </div>
-            {submitted && <div style={{ marginTop: 16, background: "#22c55e22", border: "1px solid #22c55e55", borderRadius: 10, padding: 12, textAlign: "center", color: "#22c55e" }}>✅ Feedback submitted successfully!</div>}
+            {submitted && <div style={{ marginTop: 16, background: "#22c55e22", border: "1px solid #22c55e55", borderRadius: 10, padding: 12, textAlign: "center", color: "#22c55e", fontWeight: 600 }}>✅ Feedback submitted successfully!</div>}
           </div>
         </div>
       )}
@@ -1862,7 +1894,7 @@ function StudentDashboard({ onLogout }) {
           {active === "marks" && <MarksPage />}
           {active === "lms" && <LMSPage />}
           {active === "calendar" && <CalendarPage />}
-          {active === "feedback" && <FeedbackPage />}
+          {active === "feedback" && <FeedbackPage studentId={student.id || student.dbId} />}
           {active === "fees" && <FeePaymentPage />}
           {active === "seating" && <ExamSeatingPage />}
           {active === "certificates" && <CertificatesPage />}

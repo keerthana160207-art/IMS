@@ -34,6 +34,9 @@ public class DataSeeder implements CommandLineRunner {
     private AttendanceRecordRepository recordRepository;
 
     @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -67,8 +70,8 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             user = userRepository.save(user);
 
-            // Students 1-15 -> Section A, 16-30 -> Section B
-            String section = (i <= 15) ? "A" : "B";
+            // All students in Section A
+            String section = "A";
             String code = String.format("STU%03d", i);
 
             Student student = Student.builder()
@@ -133,12 +136,12 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         List<SubMap> subjects = Arrays.asList(
-            new SubMap("CS101", "Data Structures", "A", 1),
-            new SubMap("CS102", "Operating Systems", "A", 3),
-            new SubMap("CS103", "Database Management", "A", 5),
-            new SubMap("CS104", "Computer Networks", "B", 7),
-            new SubMap("CS105", "Web Technologies", "B", 10),
-            new SubMap("CS106", "Machine Learning", "B", 13)
+            new SubMap("CS101", "Programming in Java", "A", 1),
+            new SubMap("CS102", "Database Management Systems (DBMS)", "A", 2),
+            new SubMap("CS103", "Data Structures and Algorithms", "A", 3),
+            new SubMap("CS104", "Web Technologies", "A", 4),
+            new SubMap("CS105", "Operating Systems", "A", 5),
+            new SubMap("CS106", "Software Engineering", "A", 6)
         );
 
         List<Faculty> allFac = facultyRepository.findAll();
@@ -191,6 +194,34 @@ public class DataSeeder implements CommandLineRunner {
                              .build();
                      recordRepository.save(record);
                 }
+            }
+        }
+
+        // Generate mock feedback for the 6 assigned faculties
+        feedbackRepository.deleteAll();
+        List<String> feedbackComments = Arrays.asList(
+            "Great teaching style, very engaging.",
+            "Explains concepts clearly.",
+            "Could improve on providing more practical examples.",
+            "Very helpful during office hours.",
+            "Pacing of the lectures is perfect.",
+            "Sometimes goes a bit too fast, but good overall.",
+            "Excellent subject knowledge."
+        );
+        for (Subject sub : allSubjects) {
+            Faculty fac = sub.getFaculty();
+            // Each student gives feedback
+            for (Student stu : subStudents) {
+                // Random rating between 3 and 5
+                int rating = 3 + (int)(Math.random() * 3);
+                String comment = feedbackComments.get((int)(Math.random() * feedbackComments.size()));
+                Feedback fb = Feedback.builder()
+                        .student(stu)
+                        .faculty(fac)
+                        .rating(rating)
+                        .comments(comment)
+                        .build();
+                feedbackRepository.save(fb);
             }
         }
 
